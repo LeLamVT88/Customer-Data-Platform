@@ -1,0 +1,53 @@
+name: cdp-lakehouse
+services:
+  catalog:
+    image: postgres:16.10-bookworm
+    environment:
+      POSTGRES_DB: iceberg
+      POSTGRES_USER: cdp
+      POSTGRES_PASSWORD: cdp-local-catalog
+    volumes:
+      - catalog-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cdp -d iceberg"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  storage:
+    image: chrislusf/seaweedfs:4.17
+    command: server -dir=/data -ip=storage -ip.bind=0.0.0.0 -s3 -s3.port=9000 -s3.config=/config/s3.local.json -master.volumeSizeLimitMB=256 -volume.max=0
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - storage-data:/data
+      - ../storage/s3.local.json:/config/s3.local.json:ro
+
+  spark:
+    build:
+      context: ../..
+      dockerfile: config/docker/lakehouse.Dockerfile
+    user: "0:0"
+    entrypoint: ["/opt/spark/bin/spark-submit", "--master", "local[4]", "--driver-memory", "3g", "--properties-file", "/workspace/config/spark/lakehouse.conf"]
+    environment:
+      AWS_ACCESS_KEY_ID: cdp-local
+      AWS_SECRET_ACCESS_KEY: cdp-local-storage
+      AWS_REGION: us-east-1
+      # Compatibility with the local S3 server: avoid optional checksum trailers.
+      AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+      AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
+      SPARK_LOCAL_IP: 127.0.0.1
+      PYSPARK_PYTHON: python3
+    volumes:
+      - ../../src:/workspace/src:ro
+      - ../../config/spark:/workspace/config/spark:ro
+      - ../../data:/workspace/data
+    depends_on:
+      catalog:
+        condition: service_healthy
+      storage:
+        condition: service_started
+
+volumes:
+  catalog-data:
+  storage-data:

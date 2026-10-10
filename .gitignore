@@ -2,8 +2,9 @@
 .env
 .env.*
 !.env.example
-node_modules/
 .venv/
 __pycache__/
-dist/
 build/
+# Ignore generated datasets at the project root; keep src/pipelines source code.
+/data/
+.cache/

@@ -58,6 +58,9 @@ SUPPORTED_EVENT_TYPES: set[str] = {
     "page_view", "product_view", "add_to_cart", "remove_from_cart",
     "begin_checkout", "purchase_observed", "element_click",
     "scroll_depth", "search", "error",
+    # New persona-driven event types
+    "cart_abandoned", "apply_filter", "wishlist_add", "wishlist_remove",
+    "newsletter_signup",
 }
 
 _INGESTION_LOCK = threading.Lock()   # serialise writes within a single process

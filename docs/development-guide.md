@@ -307,8 +307,16 @@ Quarantine rỗng vẫn cần để job đối soát; không xóa riêng file tr
 ## Demo website
 
 A synthetic e-commerce demo that generates typed behavioral events for the CDP pipeline.
-See [`docs/demo-website-plan.md`](docs/demo-website-plan.md) for the full plan and
-[`src/demo/README.md`](src/demo/README.md) for how to run it.
+The demo implements **4 user personas** with distinct event signatures:
+
+| Persona | Description | Event signature |
+|---|---|---|
+| **Lina** (Window Shopper) | Browses many products, no purchase | `product_view` × N, `scroll_depth` |
+| **Minh** (Decisive Buyer) | 1-2 products, fast checkout | Full funnel → `purchase_observed` |
+| **Hoa** (Researcher) | Search-heavy, no purchase | `search`, `product_view` × N, `wishlist_add` |
+| **Quang** (Cart Abandoner) | Adds many items, abandons | `add_to_cart` × N, `cart_abandoned` |
+
+New event types: `cart_abandoned`, `apply_filter`, `wishlist_add`, `wishlist_remove`, `newsletter_signup`.
 
 Quick-reference commands (from repo root, with `.venv` active):
 
@@ -320,14 +328,23 @@ pip install -r src/demo/requirements.txt
 python -m src.demo.api.server
 
 # Start web (in a second terminal)
-cd src/demo/web && python -m http.server 8080
+cd src/demo/web && python -m http.server 8081
 
-# Run bot smoke test
+# Run bot smoke test (mixed personas: 40% lina, 25% minh, 20% hoa, 15% quang)
 python -m src.demo.bot.driver --users 5
 
+# Run bot with specific persona
+python -m src.demo.bot.driver --users 10 --profile lina
+python -m src.demo.bot.driver --users 10 --profile minh
+python -m src.demo.bot.driver --users 10 --profile hoa
+python -m src.demo.bot.driver --users 10 --profile quang
+
 # Run API tests
-python -m unittest src.demo.api.tests.test_ingest -v
+python -m pytest src/demo/api/tests -q
 ```
 
-Milestones M0–M3 are fully functional. M4 (Spark → Iceberg) is scaffolded but
-requires the running Lakehouse Docker stack.
+See [`src/demo/README.md`](src/demo/README.md) for full documentation including:
+- Architecture diagram (web → API → lakehouse)
+- Persona task flows
+- Event taxonomy table (16 event types)
+- Dashboard interpretation guide

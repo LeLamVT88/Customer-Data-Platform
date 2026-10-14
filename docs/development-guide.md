@@ -303,3 +303,31 @@ Năm file trong batch 100.000 user đều thuộc manifest/checksum và được
 chạy lại: Bronze, Silver, quarantine Parquet, selected-users.json, manifest.json.
 Quarantine rỗng vẫn cần để job đối soát; không xóa riêng file trong batch.
 `.gitignore` dùng `/data/` chỉ bỏ qua dữ liệu ở root, không bỏ qua code `src/pipelines/`.
+
+## Demo website
+
+A synthetic e-commerce demo that generates typed behavioral events for the CDP pipeline.
+See [`docs/demo-website-plan.md`](docs/demo-website-plan.md) for the full plan and
+[`src/demo/README.md`](src/demo/README.md) for how to run it.
+
+Quick-reference commands (from repo root, with `.venv` active):
+
+```sh
+# Install deps
+pip install -r src/demo/requirements.txt
+
+# Start API
+python -m src.demo.api.server
+
+# Start web (in a second terminal)
+cd src/demo/web && python -m http.server 8080
+
+# Run bot smoke test
+python -m src.demo.bot.driver --users 5
+
+# Run API tests
+python -m unittest src.demo.api.tests.test_ingest -v
+```
+
+Milestones M0–M3 are fully functional. M4 (Spark → Iceberg) is scaffolded but
+requires the running Lakehouse Docker stack.

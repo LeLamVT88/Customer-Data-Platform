@@ -8,20 +8,32 @@ const API_BASE = 'http://127.0.0.1:8000';
 let _catalog = null;
 let _cart = [];
 
-/** Load catalog from API or fallback to local JSON */
+/** Load catalog from API or fallback to local JSON.
+ *  Returns [] on failure (never throws) so the UI can still render with
+ *  a friendly error status instead of dying silently. */
 export async function loadCatalog() {
   if (_catalog) return _catalog;
+  // Primary: API
   try {
     const res = await fetch(`${API_BASE}/api/catalog`);
     if (res.ok) {
       _catalog = await res.json();
       return _catalog;
     }
-  } catch (_) { /* fall through */ }
-  // Fallback: load directly from local file (works even if API is down)
-  const res = await fetch('../config/demo/catalog.products.json');
-  _catalog = await res.json();
-  return _catalog;
+  } catch (_) { /* fall through to fallback */ }
+  // Fallback: local file. The web server serves src/demo/web/ as root, so
+  // going up two levels lands at the repo root where config/demo/ lives.
+  try {
+    const res = await fetch('../../config/demo/catalog.products.json');
+    if (res.ok) {
+      _catalog = await res.json();
+      return _catalog;
+    }
+    throw new Error(`fallback HTTP ${res.status}`);
+  } catch (e) {
+    _catalog = [];
+    throw new Error(`Cannot load catalog (API down, local file missing): ${e.message}`);
+  }
 }
 
 /** Get a product by ID */
@@ -227,9 +239,27 @@ export function renderProductCard(product) {
 
 /** Render a full catalog page */
 export async function renderCatalogPage(containerId) {
-  await loadCatalog();
   const container = document.getElementById(containerId);
   if (!container) return;
+  // Reset any previous content (so re-entering the page works cleanly)
+  container.innerHTML = '<h2>Product Catalog</h2>';
+
+  try {
+    await loadCatalog();
+  } catch (e) {
+    container.innerHTML = `
+      <h2>Product Catalog</h2>
+      <div class="empty-state" style="color:var(--danger)">
+        <p>Failed to load catalog.</p>
+        <p style="font-size:.8rem">${e.message}</p>
+        <p style="font-size:.8rem">Make sure the Demo API is running: <code>python -m src.demo.api.server</code></p>
+      </div>`;
+    return;
+  }
+  if (!_catalog || _catalog.length === 0) {
+    container.innerHTML = '<h2>Product Catalog</h2><div class="empty-state"><p>No products available.</p></div>';
+    return;
+  }
 
   const categoryFilter = document.createElement('div');
   categoryFilter.className = 'form-group';
@@ -241,7 +271,7 @@ export async function renderCatalogPage(containerId) {
       <option value="">All categories</option>
       ${cats.map(c => `<option value="${c}">${c}</option>`).join('')}
     </select>`;
-  container.prepend(categoryFilter);
+  container.appendChild(categoryFilter);
 
   const grid = document.createElement('div');
   grid.className = 'card-grid';

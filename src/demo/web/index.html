@@ -91,12 +91,15 @@
     import {
       onRoute, loadCatalog, loadCart, updateNavCartBadge,
       renderCatalogPage, renderProductPage, renderCartPage,
-      renderCheckoutPage, startAutoRefresh,
+      renderCheckoutPage, showStatus,
     } from './js/catalog.js';
-    import { renderDashboard } from './js/dashboard.js';
+    import { renderDashboard, startAutoRefresh, stopAutoRefresh } from './js/dashboard.js';
 
     // Initialise
-    await loadCatalog();
+    loadCatalog().catch(err => {
+      console.error('Catalog load failed:', err);
+      showStatus('Catalog failed to load: ' + (err.message || err), true);
+    });
     loadCart();
     updateNavCartBadge();
 
@@ -110,6 +113,9 @@
     async function router() {
       const hash = location.hash || '#home';
       setActiveLink(hash);
+
+      // Stop dashboard refresh when navigating away
+      if (!hash.startsWith('#dashboard')) stopAutoRefresh();
 
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 

@@ -1,0 +1,2252 @@
+[
+  {
+    "product_id": "P0010001",
+    "category_id": "electronics.smartphone",
+    "category_code": "electronics.smartphone.apple",
+    "brand": "Apple",
+    "price": "999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=iPhone"
+  },
+  {
+    "product_id": "P0010002",
+    "category_id": "electronics.smartphone",
+    "category_code": "electronics.smartphone.samsung",
+    "brand": "Samsung",
+    "price": "849.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Galaxy"
+  },
+  {
+    "product_id": "P0010003",
+    "category_id": "electronics.laptop",
+    "category_code": "electronics.laptop.dell",
+    "brand": "Dell",
+    "price": "1199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=XPS"
+  },
+  {
+    "product_id": "P0010004",
+    "category_id": "electronics.laptop",
+    "category_code": "electronics.laptop.apple",
+    "brand": "Apple",
+    "price": "2499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=MacBook+Pro"
+  },
+  {
+    "product_id": "P0010005",
+    "category_id": "electronics.tablet",
+    "category_code": "electronics.tablet.apple",
+    "brand": "Apple",
+    "price": "799.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=iPad"
+  },
+  {
+    "product_id": "P0010006",
+    "category_id": "electronics.tablet",
+    "category_code": "electronics.tablet.samsung",
+    "brand": "Samsung",
+    "price": "549.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Galaxy+Tab"
+  },
+  {
+    "product_id": "P0010007",
+    "category_id": "electronics.headphones",
+    "category_code": "electronics.headphones.sony",
+    "brand": "Sony",
+    "price": "349.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=WH-1000XM5"
+  },
+  {
+    "product_id": "P0010008",
+    "category_id": "electronics.headphones",
+    "category_code": "electronics.headphones.apple",
+    "brand": "Apple",
+    "price": "549.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=AirPods+Max"
+  },
+  {
+    "product_id": "P0010009",
+    "category_id": "electronics.smartwatch",
+    "category_code": "electronics.smartwatch.apple",
+    "brand": "Apple",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Apple+Watch"
+  },
+  {
+    "product_id": "P0010010",
+    "category_id": "electronics.smartwatch",
+    "category_code": "electronics.smartwatch.samsung",
+    "brand": "Samsung",
+    "price": "329.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Galaxy+Watch"
+  },
+  {
+    "product_id": "P0010011",
+    "category_id": "electronics.camera",
+    "category_code": "electronics.camera.sony",
+    "brand": "Sony",
+    "price": "2499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Alpha+7"
+  },
+  {
+    "product_id": "P0010012",
+    "category_id": "electronics.camera",
+    "category_code": "electronics.camera.canon",
+    "brand": "Canon",
+    "price": "1999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=EOS+R5"
+  },
+  {
+    "product_id": "P0010013",
+    "category_id": "electronics.monitor",
+    "category_code": "electronics.monitor.lg",
+    "brand": "LG",
+    "price": "449.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=27UK850"
+  },
+  {
+    "product_id": "P0010014",
+    "category_id": "electronics.monitor",
+    "category_code": "electronics.monitor.dell",
+    "brand": "Dell",
+    "price": "699.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=UltraSharp"
+  },
+  {
+    "product_id": "P0010015",
+    "category_id": "electronics.keyboard",
+    "category_code": "electronics.keyboard.logitech",
+    "brand": "Logitech",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=MX+Keys"
+  },
+  {
+    "product_id": "P0010016",
+    "category_id": "electronics.keyboard",
+    "category_code": "electronics.keyboard.apple",
+    "brand": "Apple",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Magic+Keyboard"
+  },
+  {
+    "product_id": "P0010017",
+    "category_id": "electronics.mouse",
+    "category_code": "electronics.mouse.logitech",
+    "brand": "Logitech",
+    "price": "99.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=MX+Master"
+  },
+  {
+    "product_id": "P0010018",
+    "category_id": "electronics.mouse",
+    "category_code": "electronics.mouse.razer",
+    "brand": "Razer",
+    "price": "159.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=DeathAdder"
+  },
+  {
+    "product_id": "P0010019",
+    "category_id": "electronics.speaker",
+    "category_code": "electronics.speaker.sonos",
+    "brand": "Sonos",
+    "price": "279.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=One+SL"
+  },
+  {
+    "product_id": "P0010020",
+    "category_id": "electronics.speaker",
+    "category_code": "electronics.speaker.bose",
+    "brand": "Bose",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Home+Speaker"
+  },
+  {
+    "product_id": "P0020001",
+    "category_id": "clothing.men.tshirt",
+    "category_code": "clothing.men.tshirt.nike",
+    "brand": "Nike",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Dri-Fit"
+  },
+  {
+    "product_id": "P0020002",
+    "category_id": "clothing.men.tshirt",
+    "category_code": "clothing.men.tshirt.adidas",
+    "brand": "Adidas",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Adidas+Tee"
+  },
+  {
+    "product_id": "P0020003",
+    "category_id": "clothing.men.jeans",
+    "category_code": "clothing.men.jeans.levis",
+    "brand": "Levi's",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=511+Jeans"
+  },
+  {
+    "product_id": "P0020004",
+    "category_id": "clothing.men.jacket",
+    "category_code": "clothing.men.jacket.northface",
+    "brand": "The North Face",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Thermoball"
+  },
+  {
+    "product_id": "P0020005",
+    "category_id": "clothing.women.dress",
+    "category_code": "clothing.women.dress.zara",
+    "brand": "Zara",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Zara+Dress"
+  },
+  {
+    "product_id": "P0020006",
+    "category_id": "clothing.women.dress",
+    "category_code": "clothing.women.dress.hm",
+    "brand": "H&M",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=H%26M+Dress"
+  },
+  {
+    "product_id": "P0020007",
+    "category_id": "clothing.women.skirt",
+    "category_code": "clothing.women.skirt.mango",
+    "brand": "Mango",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Mango+Skirt"
+  },
+  {
+    "product_id": "P0020008",
+    "category_id": "clothing.shoes.sneakers",
+    "category_code": "clothing.shoes.sneakers.nike",
+    "brand": "Nike",
+    "price": "129.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Shoe"
+  },
+  {
+    "product_id": "P0020009",
+    "category_id": "clothing.shoes.sneakers",
+    "category_code": "clothing.shoes.sneakers.adidas",
+    "brand": "Adidas",
+    "price": "109.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Adidas+Sneaker"
+  },
+  {
+    "product_id": "P0020010",
+    "category_id": "clothing.shoes.boots",
+    "category_code": "clothing.shoes.boots.drmartens",
+    "brand": "Dr. Martens",
+    "price": "189.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Doc+Boots"
+  },
+  {
+    "product_id": "P0020011",
+    "category_id": "clothing.bags.backpack",
+    "category_code": "clothing.bags.backpack.nike",
+    "brand": "Nike",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Backpack"
+  },
+  {
+    "product_id": "P0020012",
+    "category_id": "clothing.bags.backpack",
+    "category_code": "clothing.bags.backpack.jansport",
+    "brand": "JanSport",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=JanSport"
+  },
+  {
+    "product_id": "P0020013",
+    "category_id": "clothing.accessories.watch",
+    "category_code": "clothing.accessories.watch.fossil",
+    "brand": "Fossil",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fossil+Watch"
+  },
+  {
+    "product_id": "P0020014",
+    "category_id": "clothing.accessories.watch",
+    "category_code": "clothing.accessories.watch.casio",
+    "brand": "Casio",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Casio+G-Shock"
+  },
+  {
+    "product_id": "P0020015",
+    "category_id": "clothing.accessories.sunglasses",
+    "category_code": "clothing.accessories.sunglasses.rayban",
+    "brand": "Ray-Ban",
+    "price": "189.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Ray-Ban"
+  },
+  {
+    "product_id": "P0020016",
+    "category_id": "clothing.men.shorts",
+    "category_code": "clothing.men.shorts.nike",
+    "brand": "Nike",
+    "price": "44.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Shorts"
+  },
+  {
+    "product_id": "P0020017",
+    "category_id": "clothing.women.top",
+    "category_code": "clothing.women.top.zara",
+    "brand": "Zara",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Zara+Top"
+  },
+  {
+    "product_id": "P0020018",
+    "category_id": "clothing.men.hoodie",
+    "category_code": "clothing.men.hoodie.nike",
+    "brand": "Nike",
+    "price": "84.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Hoodie"
+  },
+  {
+    "product_id": "P0020019",
+    "category_id": "clothing.women.coat",
+    "category_code": "clothing.women.coat.mango",
+    "brand": "Mango",
+    "price": "159.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Mango+Coat"
+  },
+  {
+    "product_id": "P0020020",
+    "category_id": "clothing.socks",
+    "category_code": "clothing.socks.stance",
+    "brand": "Stance",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Stance+Socks"
+  },
+  {
+    "product_id": "P0030001",
+    "category_id": "home.furniture.sofa",
+    "category_code": "home.furniture.sofa.ikea",
+    "brand": "IKEA",
+    "price": "899.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=KIVIK+Sofa"
+  },
+  {
+    "product_id": "P0030002",
+    "category_id": "home.furniture.chair",
+    "category_code": "home.furniture.chair.ikea",
+    "brand": "IKEA",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=MALM+Chair"
+  },
+  {
+    "product_id": "P0030003",
+    "category_id": "home.furniture.table",
+    "category_code": "home.furniture.table.ikea",
+    "brand": "IKEA",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=LISABO+Table"
+  },
+  {
+    "product_id": "P0030004",
+    "category_id": "home.furniture.bed",
+    "category_code": "home.furniture.bed.ikea",
+    "brand": "IKEA",
+    "price": "699.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=HEMNES+Bed"
+  },
+  {
+    "product_id": "P0030005",
+    "category_id": "home.lighting.lamp",
+    "category_code": "home.lighting.lamp.ikea",
+    "brand": "IKEA",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=HEKTAR+Lamp"
+  },
+  {
+    "product_id": "P0030006",
+    "category_id": "home.lighting.lamp",
+    "category_code": "home.lighting.lamp.philips",
+    "brand": "Philips",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Hue+Lamp"
+  },
+  {
+    "product_id": "P0030007",
+    "category_id": "home.kitchen.pots",
+    "category_code": "home.kitchen.pots.lecreuset",
+    "brand": "Le Creuset",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Le+Creuset"
+  },
+  {
+    "product_id": "P0030008",
+    "category_id": "home.kitchen.pots",
+    "category_code": "home.kitchen.pots.allclad",
+    "brand": "All-Clad",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=All-Clad"
+  },
+  {
+    "product_id": "P0030009",
+    "category_id": "home.kitchen.appliances",
+    "category_code": "home.kitchen.appliances.nespresso",
+    "brand": "Nespresso",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nespresso"
+  },
+  {
+    "product_id": "P0030010",
+    "category_id": "home.kitchen.appliances",
+    "category_code": "home.kitchen.appliances.kitchenaid",
+    "brand": "KitchenAid",
+    "price": "449.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=KitchenAid"
+  },
+  {
+    "product_id": "P0030011",
+    "category_id": "home.kitchen.appliances",
+    "category_code": "home.kitchen.appliances.vitamix",
+    "brand": "Vitamix",
+    "price": "549.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Vitamix"
+  },
+  {
+    "product_id": "P0030012",
+    "category_id": "home.bedding.duvet",
+    "category_code": "home.bedding.duvet.ikea",
+    "brand": "IKEA",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=DUVET"
+  },
+  {
+    "product_id": "P0030013",
+    "category_id": "home.bedding.pillow",
+    "category_code": "home.bedding.pillow.tempurpedic",
+    "brand": "Tempur-Pedic",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Tempur-Pedic"
+  },
+  {
+    "product_id": "P0030014",
+    "category_id": "home.storage.shelving",
+    "category_code": "home.storage.shelving.ikea",
+    "brand": "IKEA",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=BILLY+Shelf"
+  },
+  {
+    "product_id": "P0030015",
+    "category_id": "home.decor.vase",
+    "category_code": "home.decor.vase.homesense",
+    "brand": "HomeSense",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Vase"
+  },
+  {
+    "product_id": "P0030016",
+    "category_id": "home.decor.frame",
+    "category_code": "home.decor.frame.ikea",
+    "brand": "IKEA",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=RIBBA+Frame"
+  },
+  {
+    "product_id": "P0030017",
+    "category_id": "home.bath.towels",
+    "category_code": "home.bath.towels.ikea",
+    "brand": "IKEA",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Toftan+Towel"
+  },
+  {
+    "product_id": "P0030018",
+    "category_id": "home.garden.planter",
+    "category_code": "home.garden.planter.ikea",
+    "brand": "IKEA",
+    "price": "9.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=PLANERA"
+  },
+  {
+    "product_id": "P0030019",
+    "category_id": "home.garden.tools",
+    "category_code": "home.garden.tools.gardena",
+    "brand": "GARDENA",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=GARDENA"
+  },
+  {
+    "product_id": "P0030020",
+    "category_id": "home.office.desk",
+    "category_code": "home.office.desk.ikea",
+    "brand": "IKEA",
+    "price": "349.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=BEKANT+Desk"
+  },
+  {
+    "product_id": "P0040001",
+    "category_id": "books.fiction",
+    "category_code": "books.fiction.novel.penguin",
+    "brand": "Penguin",
+    "price": "16.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Novel"
+  },
+  {
+    "product_id": "P0040002",
+    "category_id": "books.nonfiction",
+    "category_code": "books.nonfiction.biography.vintage",
+    "brand": "Vintage",
+    "price": "18.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Biography"
+  },
+  {
+    "product_id": "P0040003",
+    "category_id": "books.science",
+    "category_code": "books.science.physics.cambridge",
+    "brand": "Cambridge",
+    "price": "44.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Physics+Text"
+  },
+  {
+    "product_id": "P0040004",
+    "category_id": "books.textbook",
+    "category_code": "books.textbook.compsci.oreilly",
+    "brand": "O'Reilly",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Tech+Book"
+  },
+  {
+    "product_id": "P0040005",
+    "category_id": "books.manga",
+    "category_code": "books.manga.shonen.viz",
+    "brand": "VIZ",
+    "price": "11.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Manga"
+  },
+  {
+    "product_id": "P0040006",
+    "category_id": "books.comics",
+    "category_code": "books.comics.marvel.panini",
+    "brand": "Panini",
+    "price": "6.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Comic"
+  },
+  {
+    "product_id": "P0040007",
+    "category_id": "books.children",
+    "category_code": "books.children.picture.scholastic",
+    "brand": "Scholastic",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Children+Book"
+  },
+  {
+    "product_id": "P0040008",
+    "category_id": "books.cookbook",
+    "category_code": "books.cookbook.baking.clarkson",
+    "brand": "Clarkson Potter",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cookbook"
+  },
+  {
+    "product_id": "P0040009",
+    "category_id": "books.travel",
+    "category_code": "books.travel.lonelyplanet",
+    "brand": "Lonely Planet",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Travel+Guide"
+  },
+  {
+    "product_id": "P0040010",
+    "category_id": "books.art",
+    "category_code": "books.art.sketching.taschen",
+    "brand": "Taschen",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Art+Book"
+  },
+  {
+    "product_id": "P0050001",
+    "category_id": "sports.cycling.bike",
+    "category_code": "sports.cycling.bike.trek",
+    "brand": "Trek",
+    "price": "899.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Trek+Bike"
+  },
+  {
+    "product_id": "P0050002",
+    "category_id": "sports.cycling.helmet",
+    "category_code": "sports.cycling.helmet.giro",
+    "brand": "Giro",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cycling+Helmet"
+  },
+  {
+    "product_id": "P0050003",
+    "category_id": "sports.running.shoes",
+    "category_code": "sports.running.shoes.asics",
+    "brand": "ASICS",
+    "price": "139.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=ASICS+Shoe"
+  },
+  {
+    "product_id": "P0050004",
+    "category_id": "sports.running.shoes",
+    "category_code": "sports.running.shoes.nike",
+    "brand": "Nike",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nike+Run"
+  },
+  {
+    "product_id": "P0050005",
+    "category_id": "sports.gym.dumbbells",
+    "category_code": "sports.gym.dumbbells.bowflex",
+    "brand": "Bowflex",
+    "price": "349.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dumbbells"
+  },
+  {
+    "product_id": "P0050006",
+    "category_id": "sports.gym.yogamat",
+    "category_code": "sports.gym.yogamat.manduka",
+    "brand": "Manduka",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Yoga+Mat"
+  },
+  {
+    "product_id": "P0050007",
+    "category_id": "sports.camping.tent",
+    "category_code": "sports.camping.tent.rei",
+    "brand": "REI",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Camping+Tent"
+  },
+  {
+    "product_id": "P0050008",
+    "category_id": "sports.camping.sleepingbag",
+    "category_code": "sports.camping.sleepingbag.thenorthface",
+    "brand": "The North Face",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Sleeping+Bag"
+  },
+  {
+    "product_id": "P0050009",
+    "category_id": "sports.climbing.harness",
+    "category_code": "sports.climbing.harness.petzl",
+    "brand": "Petzl",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Climbing+Harness"
+  },
+  {
+    "product_id": "P0050010",
+    "category_id": "sports.swimming.goggles",
+    "category_code": "sports.swimming.goggles.speedo",
+    "brand": "Speedo",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Swim+Goggles"
+  },
+  {
+    "product_id": "P0050011",
+    "category_id": "sports.tennis.racket",
+    "category_code": "sports.tennis.racket.wilson",
+    "brand": "Wilson",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Tennis+Racket"
+  },
+  {
+    "product_id": "P0050012",
+    "category_id": "sports.golf.clubs",
+    "category_code": "sports.golf.clubs.titleist",
+    "brand": "Titleist",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Golf+Clubs"
+  },
+  {
+    "product_id": "P0050013",
+    "category_id": "sports.ski.poles",
+    "category_code": "sports.ski.poles.rossignol",
+    "brand": "Rossignol",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Ski+Poles"
+  },
+  {
+    "product_id": "P0050014",
+    "category_id": "sports.snowboard.board",
+    "category_code": "sports.snowboard.board.burton",
+    "brand": "Burton",
+    "price": "499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Snowboard"
+  },
+  {
+    "product_id": "P0050015",
+    "category_id": "sports.basketball.ball",
+    "category_code": "sports.basketball.ball.spalding",
+    "brand": "Spalding",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Basketball"
+  },
+  {
+    "product_id": "P0050016",
+    "category_id": "sports.football.football",
+    "category_code": "sports.football.football.wilson",
+    "brand": "Wilson",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Football"
+  },
+  {
+    "product_id": "P0050017",
+    "category_id": "sports.soccer.ball",
+    "category_code": "sports.soccer.ball.adidas",
+    "brand": "Adidas",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Soccer+Ball"
+  },
+  {
+    "product_id": "P0050018",
+    "category_id": "sports.hiking.backpack",
+    "category_code": "sports.hiking.backpack.osprey",
+    "brand": "Osprey",
+    "price": "189.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Hiking+Pack"
+  },
+  {
+    "product_id": "P0050019",
+    "category_id": "sports.fishing.rod",
+    "category_code": "sports.fishing.rod.shimano",
+    "brand": "Shimano",
+    "price": "129.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fishing+Rod"
+  },
+  {
+    "product_id": "P0050020",
+    "category_id": "sports.gym.barbell",
+    "category_code": "sports.gym.barbell.rogue",
+    "brand": "Rogue",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Barbell"
+  },
+  {
+    "product_id": "P0060001",
+    "category_id": "beauty.skincare.face",
+    "category_code": "beauty.skincare.face.la Roche",
+    "brand": "La Roche-Posay",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=La+Roche-Posay"
+  },
+  {
+    "product_id": "P0060002",
+    "category_id": "beauty.skincare.face",
+    "category_code": "beauty.skincare.face.cerave",
+    "brand": "CeraVe",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=CeraVe"
+  },
+  {
+    "product_id": "P0060003",
+    "category_id": "beauty.makeup.lipstick",
+    "category_code": "beauty.makeup.lipstick.mac",
+    "brand": "MAC",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Lipstick"
+  },
+  {
+    "product_id": "P0060004",
+    "category_id": "beauty.makeup.foundation",
+    "category_code": "beauty.makeup.foundation.nars",
+    "brand": "NARS",
+    "price": "46.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Foundation"
+  },
+  {
+    "product_id": "P0060005",
+    "category_id": "beauty.perfume.women",
+    "category_code": "beauty.perfume.women.chanel",
+    "brand": "Chanel",
+    "price": "145.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Chanel+No5"
+  },
+  {
+    "product_id": "P0060006",
+    "category_id": "beauty.perfume.men",
+    "category_code": "beauty.perfume.men.dior",
+    "brand": "Dior",
+    "price": "129.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dior+Sauvage"
+  },
+  {
+    "product_id": "P0060007",
+    "category_id": "beauty.hair.shampoo",
+    "category_code": "beauty.hair.shampoo.olaplex",
+    "brand": "Olaplex",
+    "price": "30.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Olaplex"
+  },
+  {
+    "product_id": "P0060008",
+    "category_id": "beauty.hair.conditioner",
+    "category_code": "beauty.hair.conditioner.moroccanoil",
+    "brand": "Moroccanoil",
+    "price": "38.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Moroccanoil"
+  },
+  {
+    "product_id": "P0060009",
+    "category_id": "beauty.nails.lacquer",
+    "category_code": "beauty.nails.lacquer.opi",
+    "brand": "OPI",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=OPI+Lacquer"
+  },
+  {
+    "product_id": "P0060010",
+    "category_id": "beauty.tools.brush",
+    "category_code": "beauty.tools.brush.morphe",
+    "brand": "Morphe",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Morphe+Brush"
+  },
+  {
+    "product_id": "P0070001",
+    "category_id": "toys.building.lego",
+    "category_code": "toys.building.lego.city",
+    "brand": "LEGO",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=LEGO+City"
+  },
+  {
+    "product_id": "P0070002",
+    "category_id": "toys.building.lego",
+    "category_code": "toys.building.lego.starwars",
+    "brand": "LEGO",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=LEGO+Star+Wars"
+  },
+  {
+    "product_id": "P0070003",
+    "category_id": "toys.dolls.barbie",
+    "category_code": "toys.dolls.barbie.mattel",
+    "brand": "Mattel",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Barbie"
+  },
+  {
+    "product_id": "P0070004",
+    "category_id": "toys.dolls.actionfigure",
+    "category_code": "toys.dolls.actionfigure.hasbro",
+    "brand": "Hasbro",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Action+Figure"
+  },
+  {
+    "product_id": "P0070005",
+    "category_id": "toys.puzzles.jigsaw",
+    "category_code": "toys.puzzles.jigsaw.clementoni",
+    "brand": "Clementoni",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Jigsaw+Puzzle"
+  },
+  {
+    "product_id": "P0070006",
+    "category_id": "toys.boardgames.monopoly",
+    "category_code": "toys.boardgames.monopoly.hasbro",
+    "brand": "Hasbro",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Monopoly"
+  },
+  {
+    "product_id": "P0070007",
+    "category_id": "toys.boardgames.catan",
+    "category_code": "toys.boardgames.catan.kosmos",
+    "brand": "Kosmos",
+    "price": "44.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Catan"
+  },
+  {
+    "product_id": "P0070008",
+    "category_id": "toys.rc.cars",
+    "category_code": "toys.rc.cars.traxxas",
+    "brand": "Traxxas",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=RC+Car"
+  },
+  {
+    "product_id": "P0070009",
+    "category_id": "toys.drones",
+    "category_code": "toys.drones.dji",
+    "brand": "DJI",
+    "price": "799.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=DJI+Drone"
+  },
+  {
+    "product_id": "P0070010",
+    "category_id": "toys.educational.math",
+    "category_code": "toys.educational.math.learningresources",
+    "brand": "Learning Resources",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Math+Toy"
+  },
+  {
+    "product_id": "P0080001",
+    "category_id": "grocery.fresh.vegetables",
+    "category_code": "grocery.fresh.vegetables",
+    "brand": "Farm Fresh",
+    "price": "3.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Vegetables"
+  },
+  {
+    "product_id": "P0080002",
+    "category_id": "grocery.fresh.fruits",
+    "category_code": "grocery.fresh.fruits",
+    "brand": "Farm Fresh",
+    "price": "4.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fruits"
+  },
+  {
+    "product_id": "P0080003",
+    "category_id": "grocery.dairy.milk",
+    "category_code": "grocery.dairy.milk",
+    "brand": "Organic Valley",
+    "price": "5.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Milk"
+  },
+  {
+    "product_id": "P0080004",
+    "category_id": "grocery.dairy.cheese",
+    "category_code": "grocery.dairy.cheese",
+    "brand": "Tillamook",
+    "price": "8.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cheese"
+  },
+  {
+    "product_id": "P0080005",
+    "category_id": "grocery.meat.beef",
+    "category_code": "grocery.meat.beef",
+    "brand": "Angus Pride",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Beef"
+  },
+  {
+    "product_id": "P0080006",
+    "category_id": "grocery.meat.chicken",
+    "category_code": "grocery.meat.chicken",
+    "brand": "Perdue",
+    "price": "9.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Chicken"
+  },
+  {
+    "product_id": "P0080007",
+    "category_id": "grocery.bakery.bread",
+    "category_code": "grocery.bakery.bread",
+    "brand": "Whole Foods",
+    "price": "4.49",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Bread"
+  },
+  {
+    "product_id": "P0080008",
+    "category_id": "grocery.beverages.coffee",
+    "category_code": "grocery.beverages.coffee",
+    "brand": "Starbucks",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Coffee"
+  },
+  {
+    "product_id": "P0080009",
+    "category_id": "grocery.beverages.tea",
+    "category_code": "grocery.beverages.tea",
+    "brand": "Tazo",
+    "price": "6.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Tea"
+  },
+  {
+    "product_id": "P0080010",
+    "category_id": "grocery.snacks.chips",
+    "category_code": "grocery.snacks.chips",
+    "brand": "Lay's",
+    "price": "4.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Chips"
+  },
+  {
+    "product_id": "P0080011",
+    "category_id": "grocery.snacks.nuts",
+    "category_code": "grocery.snacks.nuts",
+    "brand": "Blue Diamond",
+    "price": "9.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Almonds"
+  },
+  {
+    "product_id": "P0080012",
+    "category_id": "grocery.frozen.pizza",
+    "category_code": "grocery.frozen.pizza",
+    "brand": "DiGiorno",
+    "price": "7.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Frozen+Pizza"
+  },
+  {
+    "product_id": "P0080013",
+    "category_id": "grocery.frozen.icecream",
+    "category_code": "grocery.frozen.icecream",
+    "brand": "Ben & Jerry's",
+    "price": "5.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Ice+Cream"
+  },
+  {
+    "product_id": "P0080014",
+    "category_id": "grocery.pantry.rice",
+    "category_code": "grocery.pantry.rice",
+    "brand": "Uncle Ben's",
+    "price": "3.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Rice"
+  },
+  {
+    "product_id": "P0080015",
+    "category_id": "grocery.pantry.pasta",
+    "category_code": "grocery.pantry.pasta",
+    "brand": "Barilla",
+    "price": "2.49",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Pasta"
+  },
+  {
+    "product_id": "P0080016",
+    "category_id": "grocery.condiments.sauce",
+    "category_code": "grocery.condiments.sauce",
+    "brand": "Heinz",
+    "price": "4.49",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Ketchup"
+  },
+  {
+    "product_id": "P0080017",
+    "category_id": "grocery.baby.formula",
+    "category_code": "grocery.baby.formula",
+    "brand": "Similac",
+    "price": "28.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Baby+Formula"
+  },
+  {
+    "product_id": "P0080018",
+    "category_id": "grocery.baby.diapers",
+    "category_code": "grocery.baby.diapers",
+    "brand": "Pampers",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Diapers"
+  },
+  {
+    "product_id": "P0080019",
+    "category_id": "grocery.pet.dogfood",
+    "category_code": "grocery.pet.dogfood",
+    "brand": "Blue Buffalo",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dog+Food"
+  },
+  {
+    "product_id": "P0080020",
+    "category_id": "grocery.pet.catfood",
+    "category_code": "grocery.pet.catfood",
+    "brand": "Purina",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cat+Food"
+  },
+  {
+    "product_id": "P0090001",
+    "category_id": "automotive.oil",
+    "category_code": "automotive.oil.mobil1",
+    "brand": "Mobil 1",
+    "price": "32.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Mobil+1"
+  },
+  {
+    "product_id": "P0090002",
+    "category_id": "automotive.tires",
+    "category_code": "automotive.tires.michelin",
+    "brand": "Michelin",
+    "price": "189.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Michelin+Tire"
+  },
+  {
+    "product_id": "P0090003",
+    "category_id": "automotive.batteries",
+    "category_code": "automotive.batteries.interstate",
+    "brand": "Interstate",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Car+Battery"
+  },
+  {
+    "product_id": "P0090004",
+    "category_id": "automotive.wiperblades",
+    "category_code": "automotive.wiperblades.bosch",
+    "brand": "Bosch",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Wiper+Blades"
+  },
+  {
+    "product_id": "P0090005",
+    "category_id": "automotive.floor mats",
+    "category_code": "automotive.floor mats.weathertech",
+    "brand": "WeatherTech",
+    "price": "129.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Floor+Mats"
+  },
+  {
+    "product_id": "P0090006",
+    "category_id": "automotive.charger",
+    "category_code": "automotive.charger.nitecore",
+    "brand": "Nitecore",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Car+Charger"
+  },
+  {
+    "product_id": "P0090007",
+    "category_id": "automotive.jumpstarter",
+    "category_code": "automotive.jumpstarter.noco",
+    "brand": "NOCO",
+    "price": "119.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Jump+Starter"
+  },
+  {
+    "product_id": "P0090008",
+    "category_id": "automotive.dashcam",
+    "category_code": "automotive.dashcam.garmin",
+    "brand": "Garmin",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dashcam"
+  },
+  {
+    "product_id": "P0090009",
+    "category_id": "automotive.sunshade",
+    "category_code": "automotive.sunshade.waysun",
+    "brand": "Waysun",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Sunshade"
+  },
+  {
+    "product_id": "P0090010",
+    "category_id": "automotive.carseatcover",
+    "category_code": "automotive.carseatcover.bdk",
+    "brand": "BDK",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Seat+Cover"
+  },
+  {
+    "product_id": "P0100001",
+    "category_id": "pet.supplies.dog",
+    "category_code": "pet.supplies.dog.collar",
+    "brand": "Blueberry",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dog+Collar"
+  },
+  {
+    "product_id": "P0100002",
+    "category_id": "pet.supplies.dog",
+    "category_code": "pet.supplies.dog.leash",
+    "brand": "Blueberry",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dog+Leash"
+  },
+  {
+    "product_id": "P0100003",
+    "category_id": "pet.supplies.dog",
+    "category_code": "pet.supplies.dog.bed",
+    "brand": "Petco",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dog+Bed"
+  },
+  {
+    "product_id": "P0100004",
+    "category_id": "pet.supplies.cat",
+    "category_code": "pet.supplies.cat.litter",
+    "brand": "Arm & Hammer",
+    "price": "18.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cat+Litter"
+  },
+  {
+    "product_id": "P0100005",
+    "category_id": "pet.supplies.cat",
+    "category_code": "pet.supplies.cat.scratcher",
+    "brand": "SmartCat",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cat+Scratcher"
+  },
+  {
+    "product_id": "P0100006",
+    "category_id": "pet.supplies.cat",
+    "category_code": "pet.supplies.cat.carrier",
+    "brand": "Sherpa",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Pet+Carrier"
+  },
+  {
+    "product_id": "P0100007",
+    "category_id": "pet.supplies.toys",
+    "category_code": "pet.supplies.toys.kong",
+    "brand": "KONG",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=KONG+Toy"
+  },
+  {
+    "product_id": "P0100008",
+    "category_id": "pet.supplies.toys",
+    "category_code": "pet.supplies.toys.nylabone",
+    "brand": "Nylabone",
+    "price": "9.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Nylabone"
+  },
+  {
+    "product_id": "P0100009",
+    "category_id": "pet.supplies.treats",
+    "category_code": "pet.supplies.treats.beggin",
+    "brand": "Beggin'",
+    "price": "22.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dog+Treats"
+  },
+  {
+    "product_id": "P0100010",
+    "category_id": "pet.supplies.grooming",
+    "category_code": "pet.supplies.grooming.furminator",
+    "brand": "Furminator",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Furminator"
+  },
+  {
+    "product_id": "P0110001",
+    "category_id": "office.stationery.pens",
+    "category_code": "office.stationery.pens.pilot",
+    "brand": "Pilot",
+    "price": "6.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Pens"
+  },
+  {
+    "product_id": "P0110002",
+    "category_id": "office.stationery.notebooks",
+    "category_code": "office.stationery.notebooks.moleskine",
+    "brand": "Moleskine",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Notebook"
+  },
+  {
+    "product_id": "P0110003",
+    "category_id": "office.stationery.stapler",
+    "category_code": "office.stationery.stapler.swingline",
+    "brand": "Swingline",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Stapler"
+  },
+  {
+    "product_id": "P0110004",
+    "category_id": "office.supplies.folders",
+    "category_code": "office.supplies.folders.pendaflex",
+    "brand": "Pendaflex",
+    "price": "8.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Folders"
+  },
+  {
+    "product_id": "P0110005",
+    "category_id": "office.equipment.printer",
+    "category_code": "office.equipment.printer.hp",
+    "brand": "HP",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Printer"
+  },
+  {
+    "product_id": "P0110006",
+    "category_id": "office.equipment.scanner",
+    "category_code": "office.equipment.scanner.epson",
+    "brand": "Epson",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Scanner"
+  },
+  {
+    "product_id": "P0110007",
+    "category_id": "office.furniture.shelving",
+    "category_code": "office.furniture.shelving.ikea",
+    "brand": "IKEA",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Office+Shelf"
+  },
+  {
+    "product_id": "P0110008",
+    "category_id": "office.whiteboard",
+    "category_code": "office.whiteboard.quartet",
+    "brand": "Quartet",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Whiteboard"
+  },
+  {
+    "product_id": "P0110009",
+    "category_id": "office.organizers.calendar",
+    "category_code": "office.organizers.calendar.ataglance",
+    "brand": "At a Glance",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Calendar"
+  },
+  {
+    "product_id": "P0110010",
+    "category_id": "office.organizers.desk",
+    "category_code": "office.organizers.desk.ebags",
+    "brand": "eBags",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Desk+Organizer"
+  },
+  {
+    "product_id": "P0120001",
+    "category_id": "garden.tools.shovel",
+    "category_code": "garden.tools.shovel.fiskars",
+    "brand": "Fiskars",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Shovel"
+  },
+  {
+    "product_id": "P0120002",
+    "category_id": "garden.tools.hedgehog",
+    "category_code": "garden.tools.hedgehog.fiskars",
+    "brand": "Fiskars",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Hedge+Trimmer"
+  },
+  {
+    "product_id": "P0120003",
+    "category_id": "garden.seeds.vegetables",
+    "category_code": "garden.seeds.vegetables.burpee",
+    "brand": "Burpee",
+    "price": "5.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Seeds"
+  },
+  {
+    "product_id": "P0120004",
+    "category_id": "garden.seeds.flowers",
+    "category_code": "garden.seeds.flowers.pennington",
+    "brand": "Pennington",
+    "price": "4.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Flower+Seeds"
+  },
+  {
+    "product_id": "P0120005",
+    "category_id": "garden.pots.terracotta",
+    "category_code": "garden.pots.terracotta",
+    "brand": "Amazon",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Terracotta+Pot"
+  },
+  {
+    "product_id": "P0120006",
+    "category_id": "garden.hoses",
+    "category_code": "garden.hoses.gardena",
+    "brand": "GARDENA",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Garden+Hose"
+  },
+  {
+    "product_id": "P0120007",
+    "category_id": "garden.gloves",
+    "category_code": "garden.gloves.gardengrip",
+    "brand": "Garden Grip",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Garden+Gloves"
+  },
+  {
+    "product_id": "P0120008",
+    "category_id": "garden.fertilizer",
+    "category_code": "garden.fertilizer.miraclegro",
+    "brand": "Miracle-Gro",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fertilizer"
+  },
+  {
+    "product_id": "P0120009",
+    "category_id": "garden.lawnmower",
+    "category_code": "garden.lawnmower.honda",
+    "brand": "Honda",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Lawn+Mower"
+  },
+  {
+    "product_id": "P0120010",
+    "category_id": "garden.bbq.grill",
+    "category_code": "garden.bbq.grill.weber",
+    "brand": "Weber",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=BBQ+Grill"
+  },
+  {
+    "product_id": "P0130001",
+    "category_id": "music.instruments.guitar",
+    "category_code": "music.instruments.guitar.fender",
+    "brand": "Fender",
+    "price": "799.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fender+Guitar"
+  },
+  {
+    "product_id": "P0130002",
+    "category_id": "music.instruments.guitar",
+    "category_code": "music.instruments.guitar.gibson",
+    "brand": "Gibson",
+    "price": "2499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Gibson+Guitar"
+  },
+  {
+    "product_id": "P0130003",
+    "category_id": "music.instruments.piano",
+    "category_code": "music.instruments.piano.yamaha",
+    "brand": "Yamaha",
+    "price": "4999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Yamaha+Piano"
+  },
+  {
+    "product_id": "P0130004",
+    "category_id": "music.instruments.drums",
+    "category_code": "music.instruments.drums.pearl",
+    "brand": "Pearl",
+    "price": "899.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Drum+Kit"
+  },
+  {
+    "product_id": "P0130005",
+    "category_id": "music.instruments.microphone",
+    "category_code": "music.instruments.microphone.shure",
+    "brand": "Shure",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Shure+Mic"
+  },
+  {
+    "product_id": "P0130006",
+    "category_id": "music.equipment.speaker",
+    "category_code": "music.equipment.speaker.jbl",
+    "brand": "JBL",
+    "price": "349.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=JBL+Speaker"
+  },
+  {
+    "product_id": "P0130007",
+    "category_id": "music.equipment.amplifier",
+    "category_code": "music.equipment.amplifier.marshall",
+    "brand": "Marshall",
+    "price": "599.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Marshall+Amp"
+  },
+  {
+    "product_id": "P0130008",
+    "category_id": "music.equipment.headphones",
+    "category_code": "music.equipment.headphones.audio-technica",
+    "brand": "Audio-Technica",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Audio-Technica"
+  },
+  {
+    "product_id": "P0130009",
+    "category_id": "music.accessories.cables",
+    "category_code": "music.accessories.cables.mogami",
+    "brand": "Mogami",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cables"
+  },
+  {
+    "product_id": "P0130010",
+    "category_id": "music.accessories.stand",
+    "category_code": "music.accessories.stand.ondastand",
+    "brand": "On-Stage",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Music+Stand"
+  },
+  {
+    "product_id": "P0140001",
+    "category_id": "health.vitamins.a",
+    "category_code": "health.vitamins.a.centrum",
+    "brand": "Centrum",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Vitamins"
+  },
+  {
+    "product_id": "P0140002",
+    "category_id": "health.vitamins.d",
+    "category_code": "health.vitamins.d.naturemade",
+    "brand": "Nature Made",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Vitamin+D"
+  },
+  {
+    "product_id": "P0140003",
+    "category_id": "health.firstaid",
+    "category_code": "health.firstaid.bandages.neosporin",
+    "brand": "Neosporin",
+    "price": "8.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=First+Aid"
+  },
+  {
+    "product_id": "P0140004",
+    "category_id": "health.thermometer",
+    "category_code": "health.thermometer.braun",
+    "brand": "Braun",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Thermometer"
+  },
+  {
+    "product_id": "P0140005",
+    "category_id": "health.bloodpressure",
+    "category_code": "health.bloodpressure.omron",
+    "brand": "Omron",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Blood+Pressure"
+  },
+  {
+    "product_id": "P0140006",
+    "category_id": "health.weightscale",
+    "category_code": "health.weightscale.withings",
+    "brand": "Withings",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Weight+Scale"
+  },
+  {
+    "product_id": "P0140007",
+    "category_id": "health.mask.n95",
+    "category_code": "health.mask.n95.3m",
+    "brand": "3M",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=N95+Mask"
+  },
+  {
+    "product_id": "P0140008",
+    "category_id": "health.hand-sanitizer",
+    "category_code": "health.hand-sanitizer.purell",
+    "brand": "Purell",
+    "price": "6.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Hand+Sanitizer"
+  },
+  {
+    "product_id": "P0140009",
+    "category_id": "health.fitness.tracker",
+    "category_code": "health.fitness.tracker.fitbit",
+    "brand": "Fitbit",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fitbit"
+  },
+  {
+    "product_id": "P0140010",
+    "category_id": "health.fitness.pulse-ox",
+    "category_code": "health.fitness.pulse-ox.santamedical",
+    "brand": "Santamedical",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Pulse+Oximeter"
+  },
+  {
+    "product_id": "P0150001",
+    "category_id": "games.videogames.playstation",
+    "category_code": "games.videogames.playstation.console",
+    "brand": "Sony",
+    "price": "499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=PlayStation+5"
+  },
+  {
+    "product_id": "P0150002",
+    "category_id": "games.videogames.xbox",
+    "category_code": "games.videogames.xbox.console",
+    "brand": "Microsoft",
+    "price": "499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Xbox+Series+X"
+  },
+  {
+    "product_id": "P0150003",
+    "category_id": "games.videogames.nintendo",
+    "category_code": "games.videogames.nintendo.console",
+    "brand": "Nintendo",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Switch"
+  },
+  {
+    "product_id": "P0150004",
+    "category_id": "games.videogames.playstation",
+    "category_code": "games.videogames.playstation.game",
+    "brand": "Sony",
+    "price": "69.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=PS5+Game"
+  },
+  {
+    "product_id": "P0150005",
+    "category_id": "games.videogames.xbox",
+    "category_code": "games.videogames.xbox.game",
+    "brand": "Microsoft",
+    "price": "69.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Xbox+Game"
+  },
+  {
+    "product_id": "P0150006",
+    "category_id": "games.videogames.nintendo",
+    "category_code": "games.videogames.nintendo.game",
+    "brand": "Nintendo",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Switch+Game"
+  },
+  {
+    "product_id": "P0150007",
+    "category_id": "games.videogames.controller",
+    "category_code": "games.videogames.controller.ps5",
+    "brand": "Sony",
+    "price": "69.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=PS5+Controller"
+  },
+  {
+    "product_id": "P0150008",
+    "category_id": "games.videogames.headset",
+    "category_code": "games.videogames.headset.turtlebeach",
+    "brand": "Turtle Beach",
+    "price": "99.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Gaming+Headset"
+  },
+  {
+    "product_id": "P0150009",
+    "category_id": "games.boardgames.strategy",
+    "category_code": "games.boardgames.strategy.steam",
+    "brand": "Steam",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Steam+Game"
+  },
+  {
+    "product_id": "P0150010",
+    "category_id": "games.boardgames.puzzle",
+    "category_code": "games.boardgames.puzzle",
+    "brand": "Ravensburger",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Puzzle+Game"
+  },
+  {
+    "product_id": "P0160001",
+    "category_id": "jewelry.rings.engagement",
+    "category_code": "jewelry.rings.engagement.tiffany",
+    "brand": "Tiffany & Co.",
+    "price": "9999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Engagement+Ring"
+  },
+  {
+    "product_id": "P0160002",
+    "category_id": "jewelry.rings.gold",
+    "category_code": "jewelry.rings.gold.cartier",
+    "brand": "Cartier",
+    "price": "4999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Gold+Ring"
+  },
+  {
+    "product_id": "P0160003",
+    "category_id": "jewelry.necklaces.silver",
+    "category_code": "jewelry.necklaces.silver.pandora",
+    "brand": "Pandora",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Silver+Necklace"
+  },
+  {
+    "product_id": "P0160004",
+    "category_id": "jewelry.bracelets.beaded",
+    "category_code": "jewelry.bracelets.beaded.trollbeads",
+    "brand": "Trollbeads",
+    "price": "89.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Beaded+Bracelet"
+  },
+  {
+    "product_id": "P0160005",
+    "category_id": "jewelry.earrings.studs",
+    "category_code": "jewelry.earrings.studs.kay",
+    "brand": "Kay Jewelers",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Stud+Earrings"
+  },
+  {
+    "product_id": "P0160006",
+    "category_id": "jewelry.watches.mens",
+    "category_code": "jewelry.watches.mens.tagheuer",
+    "brand": "TAG Heuer",
+    "price": "2999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Mens+Watch"
+  },
+  {
+    "product_id": "P0160007",
+    "category_id": "jewelry.watches.womens",
+    "category_code": "jewelry.watches.womens.gucci",
+    "brand": "Gucci",
+    "price": "2499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Womens+Watch"
+  },
+  {
+    "product_id": "P0160008",
+    "category_id": "jewelry.cufflinks",
+    "category_code": "jewelry.cufflinks.montblanc",
+    "brand": "Montblanc",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Cufflinks"
+  },
+  {
+    "product_id": "P0160009",
+    "category_id": "jewelry.anklets",
+    "category_code": "jewelry.anklets.gemfore",
+    "brand": "GEMFORGE",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Anklet"
+  },
+  {
+    "product_id": "P0160010",
+    "category_id": "jewelry.bodyjewelry",
+    "category_code": "jewelry.bodyjewelry.stefanic",
+    "brand": "Stefanic",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Body+Jewelry"
+  },
+  {
+    "product_id": "P0170001",
+    "category_id": "sports.supplements.protein",
+    "category_code": "sports.supplements.protein.optimumnutrition",
+    "brand": "Optimum Nutrition",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Protein+Powder"
+  },
+  {
+    "product_id": "P0170002",
+    "category_id": "sports.supplements.creatine",
+    "category_code": "sports.supplements.creatine.cellucor",
+    "brand": "Cellucor",
+    "price": "29.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Creatine"
+  },
+  {
+    "product_id": "P0170003",
+    "category_id": "sports.supplements.preworkout",
+    "category_code": "sports.supplements.preworkout.blast",
+    "brand": "C4",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Pre-Workout"
+  },
+  {
+    "product_id": "P0170004",
+    "category_id": "sports.supplements.bcaa",
+    "category_code": "sports.supplements.bcaa.xtend",
+    "brand": "Xtend",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=BCAA"
+  },
+  {
+    "product_id": "P0170005",
+    "category_id": "sports.supplements.collagen",
+    "category_code": "sports.supplements.collagen.vitalproteins",
+    "brand": "Vital Proteins",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Collagen"
+  },
+  {
+    "product_id": "P0170006",
+    "category_id": "sports.supplements.fish-oil",
+    "category_code": "sports.supplements.fish-oil.nordicnaturals",
+    "brand": "Nordic Naturals",
+    "price": "27.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Fish+Oil"
+  },
+  {
+    "product_id": "P0170007",
+    "category_id": "sports.supplements.multivitamin",
+    "category_code": "sports.supplements.multivitamin.rainbowlight",
+    "brand": "Rainbow Light",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Multivitamin"
+  },
+  {
+    "product_id": "P0170008",
+    "category_id": "sports.supplements.probiotics",
+    "category_code": "sports.supplements.probiotics.renewlife",
+    "brand": "Renew Life",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Probiotics"
+  },
+  {
+    "product_id": "P0170009",
+    "category_id": "sports.supplements.zinc",
+    "category_code": "sports.supplements.zinc.coldEEze",
+    "brand": "Cold-EEze",
+    "price": "16.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Zinc"
+  },
+  {
+    "product_id": "P0170010",
+    "category_id": "sports.supplements.melatonin",
+    "category_code": "sports.supplements.melatonin.natrol",
+    "brand": "Natrol",
+    "price": "12.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Melatonin"
+  },
+  {
+    "product_id": "P0180001",
+    "category_id": "homeappliances.vacuum",
+    "category_code": "homeappliances.vacuum.dyson",
+    "brand": "Dyson",
+    "price": "699.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dyson+Vacuum"
+  },
+  {
+    "product_id": "P0180002",
+    "category_id": "homeappliances.airpurifier",
+    "category_code": "homeappliances.airpurifier.dyson",
+    "brand": "Dyson",
+    "price": "549.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Air+Purifier"
+  },
+  {
+    "product_id": "P0180003",
+    "category_id": "homeappliances.humidifier",
+    "category_code": "homeappliances.humidifier.honeywell",
+    "brand": "Honeywell",
+    "price": "49.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Humidifier"
+  },
+  {
+    "product_id": "P0180004",
+    "category_id": "homeappliances.fan",
+    "category_code": "homeappliances.fan.dyson",
+    "brand": "Dyson",
+    "price": "599.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dyson+Fan"
+  },
+  {
+    "product_id": "P0180005",
+    "category_id": "homeappliances.heater",
+    "category_code": "homeappliances.heater.dyson",
+    "brand": "Dyson",
+    "price": "499.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dyson+Heater"
+  },
+  {
+    "product_id": "P0180006",
+    "category_id": "homeappliances.iron",
+    "category_code": "homeappliances.iron.rowenta",
+    "brand": "Rowenta",
+    "price": "79.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Iron"
+  },
+  {
+    "product_id": "P0180007",
+    "category_id": "homeappliances.steamer",
+    "category_code": "homeappliances.steamer.conair",
+    "brand": "Conair",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Garment+Steamer"
+  },
+  {
+    "product_id": "P0180008",
+    "category_id": "homeappliances.sewingmachine",
+    "category_code": "homeappliances.sewingmachine.singer",
+    "brand": "Singer",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Sewing+Machine"
+  },
+  {
+    "product_id": "P0180009",
+    "category_id": "homeappliances.dehumidifier",
+    "category_code": "homeappliances.dehumidifier.iodata",
+    "brand": "IO DATA",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Dehumidifier"
+  },
+  {
+    "product_id": "P0180010",
+    "category_id": "homeappliances.airfryer",
+    "category_code": "homeappliances.airfryer.philips",
+    "brand": "Philips",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Air+Fryer"
+  },
+  {
+    "product_id": "P0190001",
+    "category_id": "baby.strollers",
+    "category_code": "baby.strollers.uppababy",
+    "brand": "UPPAbaby",
+    "price": "999.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Stroller"
+  },
+  {
+    "product_id": "P0190002",
+    "category_id": "baby.car-seat",
+    "category_code": "baby.car-seat.chicco",
+    "brand": "Chicco",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Car+Seat"
+  },
+  {
+    "product_id": "P0190003",
+    "category_id": "baby.monitor",
+    "category_code": "baby.monitor.owlet",
+    "brand": "Owlet",
+    "price": "299.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Baby+Monitor"
+  },
+  {
+    "product_id": "P0190004",
+    "category_id": "baby.highchair",
+    "category_code": "baby.highchair.stokke",
+    "brand": "Stokke",
+    "price": "249.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=High+Chair"
+  },
+  {
+    "product_id": "P0190005",
+    "category_id": "baby.bassinet",
+    "category_code": "baby.bassinet.babybjorn",
+    "brand": "BabyBjörn",
+    "price": "229.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Bassinet"
+  },
+  {
+    "product_id": "P0190006",
+    "category_id": "baby.carrier",
+    "category_code": "baby.carrier.ergobaby",
+    "brand": "Ergobaby",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Baby+Carrier"
+  },
+  {
+    "product_id": "P0190007",
+    "category_id": "baby.changing-table",
+    "category_code": "baby.changing-table. BABYZURE",
+    "brand": "BABYZURE",
+    "price": "129.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Changing+Table"
+  },
+  {
+    "product_id": "P0190008",
+    "category_id": "baby.baby-gate",
+    "category_code": "baby.baby-gate.evenflo",
+    "brand": "Evenflo",
+    "price": "44.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Baby+Gate"
+  },
+  {
+    "product_id": "P0190009",
+    "category_id": "baby.bottle",
+    "category_code": "baby.bottle.medela",
+    "brand": "Medela",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Baby+Bottle"
+  },
+  {
+    "product_id": "P0190010",
+    "category_id": "baby.diaper-bag",
+    "category_code": "baby.diaper-bag.ju Jybe",
+    "brand": "Ju-Jybe",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Diaper+Bag"
+  },
+  {
+    "product_id": "P0200001",
+    "category_id": "office.tech.cables.usbc",
+    "category_code": "office.tech.cables.usbc.ankermake",
+    "brand": "Anker",
+    "price": "19.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=USB-C+Cable"
+  },
+  {
+    "product_id": "P0200002",
+    "category_id": "office.tech.cables.hdmi",
+    "category_code": "office.tech.cables.hdmi.belkin",
+    "brand": "Belkin",
+    "price": "14.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=HDMI+Cable"
+  },
+  {
+    "product_id": "P0200003",
+    "category_id": "office.tech.hub.usb",
+    "category_code": "office.tech.hub.usb.caldigit",
+    "brand": "CalDigit",
+    "price": "99.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=USB+Hub"
+  },
+  {
+    "product_id": "P0200004",
+    "category_id": "office.tech.stand.laptop",
+    "category_code": "office.tech.stand.laptop.raijen",
+    "brand": "Rain Design",
+    "price": "39.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Laptop+Stand"
+  },
+  {
+    "product_id": "P0200005",
+    "category_id": "office.tech.dock.thunderbolt",
+    "category_code": "office.tech.dock.thunderbolt.caldigit",
+    "brand": "CalDigit",
+    "price": "399.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Thunderbolt+Dock"
+  },
+  {
+    "product_id": "P0200006",
+    "category_id": "office.tech.webcam",
+    "category_code": "office.tech.webcam.logitech",
+    "brand": "Logitech",
+    "price": "149.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Webcam"
+  },
+  {
+    "product_id": "P0200007",
+    "category_id": "office.tech.mousepad",
+    "category_code": "office.tech.mousepad.steelseries",
+    "brand": "SteelSeries",
+    "price": "24.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Mousepad"
+  },
+  {
+    "product_id": "P0200008",
+    "category_id": "office.tech.monitorarm",
+    "category_code": "office.tech.monitorarm.ergotron",
+    "brand": "Ergotron",
+    "price": "199.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Monitor+Arm"
+  },
+  {
+    "product_id": "P0200009",
+    "category_id": "office.tech.surge",
+    "category_code": "office.tech.surge.belkin",
+    "brand": "Belkin",
+    "price": "34.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Surge+Protector"
+  },
+  {
+    "product_id": "P0200010",
+    "category_id": "office.tech.powerbank",
+    "category_code": "office.tech.powerbank.ankermake",
+    "brand": "Anker",
+    "price": "59.99",
+    "currency": "USD",
+    "image_url": "https://via.placeholder.com/300x300.png?text=Power+Bank"
+  }
+]

@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CDP Demo — Home</title>
+  <title>CDP Demo Store</title>
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
   <nav class="nav">
     <a href="#home" class="nav-brand">🛒 CDP Demo Store</a>
     <div class="nav-links">
-      <a href="#catalog" class="nav-link" data-page="catalog">Catalog</a>
+      <a href="#home" class="nav-link" data-page="home">Trang chủ</a>
+      <a href="#catalog" class="nav-link" data-page="catalog">Danh mục</a>
       <a href="#cart" class="nav-link" data-page="cart">
-        Cart <span id="cart-badge" style="display:none"></span>
+        Giỏ hàng <span id="cart-badge" style="display:none"></span>
       </a>
       <a href="#dashboard" class="nav-link" data-page="dashboard">Dashboard</a>
     </div>
@@ -21,47 +22,12 @@
   <div class="container">
     <!-- HOME -->
     <div id="page-home" class="page active">
-      <div class="card" style="text-align:center;padding:3rem">
-        <h1 style="margin-bottom:.5rem">Welcome to the CDP Demo Store</h1>
-        <p style="color:var(--muted);margin-bottom:1.5rem">
-          A synthetic e-commerce site that generates typed behavioral events
-          for your Customer Data Platform pipeline.
-        </p>
-        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
-          <a href="#catalog" class="btn btn-primary">Browse Catalog</a>
-          <a href="#dashboard" class="btn">View Dashboard</a>
-        </div>
-
-        <div style="margin-top:2rem;text-align:left;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
-          <div class="card" style="padding:1rem">
-            <strong>📦 Browse Products</strong>
-            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Explore 500 products across 20 categories.</p>
-          </div>
-          <div class="card" style="padding:1rem">
-            <strong>🛒 Add to Cart</strong>
-            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Add items and proceed to checkout.</p>
-          </div>
-          <div class="card" style="padding:1rem">
-            <strong>📊 Live Dashboard</strong>
-            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Watch events flow into the CDP pipeline.</p>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:1rem;background:#f0f4ff;border-color:#c0d0ff">
-          <strong style="color:var(--primary)">🤖 Bot Driver Available</strong>
-          <p style="font-size:.8rem;color:var(--muted);margin:.25rem 0 .75rem">
-            Run <code>python -m src.demo.bot.driver --users 5</code> to simulate synthetic users
-            and watch the dashboard update in real time.
-          </p>
-          <a href="#dashboard" class="btn btn-primary btn-sm">Open Dashboard</a>
-        </div>
-      </div>
+      <div id="home-content"></div>
     </div>
 
     <!-- CATALOG -->
     <div id="page-catalog" class="page">
-      <h2>Product Catalog</h2>
-      <div id="catalog-grid"></div>
+      <div id="catalog-content"></div>
     </div>
 
     <!-- PRODUCT DETAIL -->
@@ -90,15 +56,15 @@
   <script type="module">
     import {
       onRoute, loadCatalog, loadCart, updateNavCartBadge,
-      renderCatalogPage, renderProductPage, renderCartPage,
-      renderCheckoutPage, showStatus,
+      renderHomePage, renderCatalogPage, renderProductPage, renderCartPage,
+      renderCheckoutPage, showStatus, flushEvents,
     } from './js/catalog.js';
     import { renderDashboard, startAutoRefresh, stopAutoRefresh } from './js/dashboard.js';
 
     // Initialise
     loadCatalog().catch(err => {
       console.error('Catalog load failed:', err);
-      showStatus('Catalog failed to load: ' + (err.message || err), true);
+      showStatus('Tải danh mục thất bại: ' + (err.message || err), true);
     });
     loadCart();
     updateNavCartBadge();
@@ -114,14 +80,13 @@
       const hash = location.hash || '#home';
       setActiveLink(hash);
 
-      // Stop dashboard refresh when navigating away
       if (!hash.startsWith('#dashboard')) stopAutoRefresh();
 
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 
       if (hash.startsWith('#catalog')) {
         document.getElementById('page-catalog').classList.add('active');
-        await renderCatalogPage('catalog-grid');
+        await renderCatalogPage('catalog-content');
       } else if (hash.startsWith('#product')) {
         document.getElementById('page-product').classList.add('active');
         await renderProductPage('product-detail');
@@ -137,6 +102,7 @@
         startAutoRefresh();
       } else {
         document.getElementById('page-home').classList.add('active');
+        renderHomePage('home-content');
       }
     }
 

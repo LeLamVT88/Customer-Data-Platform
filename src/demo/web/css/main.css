@@ -10,6 +10,8 @@
   --primary-hover: #0b5ed7;
   --danger: #dc3545;
   --success: #198754;
+  --warning: #fd7e14;
+  --purple: #6f42c1;
   --radius: 6px;
   --shadow: 0 1px 3px rgba(0,0,0,.1);
 }
@@ -90,6 +92,8 @@ body {
 .product-card-brand { font-size: .75rem; color: var(--muted); }
 .product-card-name { font-size: .9rem; font-weight: 600; margin: .25rem 0; }
 .product-card-price { color: var(--primary); font-weight: 700; }
+
+/* ── Buttons ────────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; gap: .25rem;
   padding: .375rem .75rem;
@@ -107,6 +111,8 @@ body {
 .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 .btn-danger { color: var(--danger); }
 .btn-danger:hover { background: #ffeef0; }
+.btn-outline { border-color: var(--primary); color: var(--primary); background: transparent; }
+.btn-outline:hover { background: #e7f1ff; }
 .btn-sm { padding: .25rem .5rem; font-size: .8rem; }
 
 /* ── Forms ───────────────────────────────────────────────────── */
@@ -122,6 +128,19 @@ input, select {
 }
 input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
 
+/* ── Catalog toolbar ────────────────────────────────────────── */
+.catalog-toolbar {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+  padding: .75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
 /* ── Cart table ──────────────────────────────────────────────── */
 .cart-table { width: 100%; border-collapse: collapse; }
 .cart-table th, .cart-table td { padding: .75rem; text-align: left; border-bottom: 1px solid var(--border); }
@@ -136,6 +155,31 @@ input:focus, select:focus { outline: 2px solid var(--primary); border-color: tra
 canvas { max-width: 100%; }
 .chart-section { margin-top: 1.5rem; }
 
+/* Persona badge colours */
+.badge-persona { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: .75rem; font-weight: 700; margin-bottom: .5rem; }
+.badge-lina    { background: #e0e7ff; color: #3730a3; }
+.badge-minh    { background: #d1fae5; color: #065f46; }
+.badge-hoa     { background: #fef3c7; color: #92400e; }
+.badge-quang   { background: #fee2e2; color: #991b1b; }
+.badge-default { background: #f3f4f6; color: #374151; }
+
+/* Funnel step */
+.funnel { display: flex; align-items: center; gap: .25rem; margin: .5rem 0; flex-wrap: wrap; }
+.funnel-step { display: flex; align-items: center; gap: .25rem; font-size: .8rem; }
+.funnel-arrow { color: var(--muted); }
+
+/* Insight lists */
+.insight-list { list-style: none; padding: 0; margin: 0; }
+.insight-list li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .875rem;
+}
+.insight-list li:last-child { border-bottom: none; }
+.insight-label { color: var(--text); }
+.insight-count { font-weight: 700; color: var(--primary); }
+
 /* ── Toast / status bar ─────────────────────────────────────── */
 #status-bar {
   position: fixed; bottom: 1rem; right: 1rem;
@@ -147,6 +191,27 @@ canvas { max-width: 100%; }
 }
 #status-bar.show { opacity: 1; }
 
+/* ── Section title ─────────────────────────────────────────── */
+.section-title { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; color: var(--text); }
+
+/* ── Newsletter form ───────────────────────────────────────── */
+.newsletter-form { display: flex; flex-direction: column; gap: .5rem; }
+
 /* ── Empty state ─────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
 .empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: .4; }
+
+/* ── Persona cards on dashboard ──────────────────────────────── */
+.persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.persona-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.persona-card h4 { font-size: .9rem; margin-bottom: .25rem; }
+.persona-card p { font-size: .8rem; color: var(--muted); margin-bottom: .5rem; }
+.persona-steps { font-size: .8rem; color: var(--muted); padding-left: 1rem; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .catalog-toolbar { flex-direction: column; align-items: stretch; }
+  .catalog-toolbar input, .catalog-toolbar select { width: 100%; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .persona-grid { grid-template-columns: 1fr; }
+}

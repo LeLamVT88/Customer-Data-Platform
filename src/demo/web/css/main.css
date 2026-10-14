@@ -1,0 +1,152 @@
+/* src/demo/web/css/main.css — Minimal styling for the demo SPA */
+
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --border: #dee2e6;
+  --text: #212529;
+  --muted: #6c757d;
+  --primary: #0d6efd;
+  --primary-hover: #0b5ed7;
+  --danger: #dc3545;
+  --success: #198754;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── Navigation ─────────────────────────────────────────────── */
+.nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  height: 52px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand { font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--text); }
+.nav-brand:hover { color: var(--primary); }
+.nav-links { display: flex; gap: .25rem; margin-left: 1rem; }
+.nav-link {
+  padding: .375rem .75rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  font-size: .9rem;
+  transition: background .15s;
+}
+.nav-link:hover { background: var(--bg); }
+.nav-link.active { background: var(--primary); color: #fff; }
+.nav-badge {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 999px;
+  font-size: .75rem;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
+/* ── Layout ──────────────────────────────────────────────────── */
+.container { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.product-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+}
+.product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-2px); }
+.product-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.product-card-body { padding: .75rem; }
+.product-card-brand { font-size: .75rem; color: var(--muted); }
+.product-card-name { font-size: .9rem; font-weight: 600; margin: .25rem 0; }
+.product-card-price { color: var(--primary); font-weight: 700; }
+.btn {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .375rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: .875rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: #ffeef0; }
+.btn-sm { padding: .25rem .5rem; font-size: .8rem; }
+
+/* ── Forms ───────────────────────────────────────────────────── */
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: .25rem; }
+input, select {
+  width: 100%;
+  padding: .5rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+  background: var(--surface);
+}
+input:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+/* ── Cart table ──────────────────────────────────────────────── */
+.cart-table { width: 100%; border-collapse: collapse; }
+.cart-table th, .cart-table td { padding: .75rem; text-align: left; border-bottom: 1px solid var(--border); }
+.cart-table th { font-size: .8rem; color: var(--muted); text-transform: uppercase; }
+.cart-total { text-align: right; font-size: 1.1rem; font-weight: 700; margin-top: 1rem; }
+
+/* ── Dashboard ──────────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
+.stat-value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
+canvas { max-width: 100%; }
+.chart-section { margin-top: 1.5rem; }
+
+/* ── Toast / status bar ─────────────────────────────────────── */
+#status-bar {
+  position: fixed; bottom: 1rem; right: 1rem;
+  background: var(--text); color: #fff;
+  padding: .5rem 1rem; border-radius: var(--radius);
+  font-size: .85rem;
+  opacity: 0; transition: opacity .3s;
+  z-index: 999;
+}
+#status-bar.show { opacity: 1; }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: .4; }

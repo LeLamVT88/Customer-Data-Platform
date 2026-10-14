@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CDP Demo — Home</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="#home" class="nav-brand">🛒 CDP Demo Store</a>
+    <div class="nav-links">
+      <a href="#catalog" class="nav-link" data-page="catalog">Catalog</a>
+      <a href="#cart" class="nav-link" data-page="cart">
+        Cart <span id="cart-badge" style="display:none"></span>
+      </a>
+      <a href="#dashboard" class="nav-link" data-page="dashboard">Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="card" style="text-align:center;padding:3rem">
+        <h1 style="margin-bottom:.5rem">Welcome to the CDP Demo Store</h1>
+        <p style="color:var(--muted);margin-bottom:1.5rem">
+          A synthetic e-commerce site that generates typed behavioral events
+          for your Customer Data Platform pipeline.
+        </p>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+          <a href="#catalog" class="btn btn-primary">Browse Catalog</a>
+          <a href="#dashboard" class="btn">View Dashboard</a>
+        </div>
+
+        <div style="margin-top:2rem;text-align:left;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+          <div class="card" style="padding:1rem">
+            <strong>📦 Browse Products</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Explore 500 products across 20 categories.</p>
+          </div>
+          <div class="card" style="padding:1rem">
+            <strong>🛒 Add to Cart</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Add items and proceed to checkout.</p>
+          </div>
+          <div class="card" style="padding:1rem">
+            <strong>📊 Live Dashboard</strong>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Watch events flow into the CDP pipeline.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:1rem;background:#f0f4ff;border-color:#c0d0ff">
+          <strong style="color:var(--primary)">🤖 Bot Driver Available</strong>
+          <p style="font-size:.8rem;color:var(--muted);margin:.25rem 0 .75rem">
+            Run <code>python -m src.demo.bot.driver --users 5</code> to simulate synthetic users
+            and watch the dashboard update in real time.
+          </p>
+          <a href="#dashboard" class="btn btn-primary btn-sm">Open Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOG -->
+    <div id="page-catalog" class="page">
+      <h2>Product Catalog</h2>
+      <div id="catalog-grid"></div>
+    </div>
+
+    <!-- PRODUCT DETAIL -->
+    <div id="page-product" class="page">
+      <div id="product-detail"></div>
+    </div>
+
+    <!-- CART -->
+    <div id="page-cart" class="page">
+      <div id="cart-content"></div>
+    </div>
+
+    <!-- CHECKOUT -->
+    <div id="page-checkout" class="page">
+      <div id="checkout-content"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <div id="dashboard-content"></div>
+    </div>
+  </div>
+
+  <div id="status-bar"></div>
+
+  <script type="module">
+    import {
+      onRoute, loadCatalog, loadCart, updateNavCartBadge,
+      renderCatalogPage, renderProductPage, renderCartPage,
+      renderCheckoutPage, startAutoRefresh,
+    } from './js/catalog.js';
+    import { renderDashboard } from './js/dashboard.js';
+
+    // Initialise
+    await loadCatalog();
+    loadCart();
+    updateNavCartBadge();
+
+    function setActiveLink(hash) {
+      document.querySelectorAll('.nav-link').forEach(a => {
+        const page = a.dataset.page;
+        a.classList.toggle('active', hash.startsWith('#' + page));
+      });
+    }
+
+    async function router() {
+      const hash = location.hash || '#home';
+      setActiveLink(hash);
+
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+      if (hash.startsWith('#catalog')) {
+        document.getElementById('page-catalog').classList.add('active');
+        await renderCatalogPage('catalog-grid');
+      } else if (hash.startsWith('#product')) {
+        document.getElementById('page-product').classList.add('active');
+        await renderProductPage('product-detail');
+      } else if (hash.startsWith('#cart')) {
+        document.getElementById('page-cart').classList.add('active');
+        renderCartPage('cart-content');
+      } else if (hash.startsWith('#checkout')) {
+        document.getElementById('page-checkout').classList.add('active');
+        renderCheckoutPage('checkout-content');
+      } else if (hash.startsWith('#dashboard')) {
+        document.getElementById('page-dashboard').classList.add('active');
+        await renderDashboard();
+        startAutoRefresh();
+      } else {
+        document.getElementById('page-home').classList.add('active');
+      }
+    }
+
+    onRoute(router);
+  </script>
+</body>
+</html>

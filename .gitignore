@@ -8,3 +8,5 @@ build/
 # Ignore generated datasets at the project root; keep src/pipelines source code.
 /data/
 .cache/
+# Demo logs
+logs/

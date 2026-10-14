@@ -155,7 +155,11 @@ def run_worker(
             events_emitted += 1
 
         elif step_type == "product_view":
-            product = rng.choice(products)
+            product_idx = step.get("product_idx", -1)
+            if product_idx == -1:
+                product = rng.choice(products)
+            else:
+                product = products[product_idx % len(products)]
             ev = emit("product_view", {
                 "product_id": product["product_id"],
                 "category_id": product["category_id"],
@@ -225,6 +229,39 @@ def run_worker(
             _send([ev])
             events_emitted += 1
 
+        elif step_type == "search":
+            query = step.get("query") or rng.choice(["electronics", "laptop", "phone", "shoes", "book"])
+            ev = emit("search", {
+                "query": query,
+                "results_count": rng.randint(5, 50),
+                "type": "catalog_search",
+            })
+            _send([ev])
+            events_emitted += 1
+
+        elif step_type == "wishlist_add":
+            product = rng.choice(products)
+            ev = emit("wishlist_add", {
+                "product_id": product["product_id"],
+                "price": product["price"],
+                "currency": product.get("currency", "USD"),
+            })
+            _send([ev])
+            events_emitted += 1
+
+        elif step_type == "cart_abandoned":
+            if cart:
+                ev = emit("cart_abandoned", {
+                    "items": [dict(i) for i in cart],
+                    "total_price": str(round(sum(
+                        float(next((p for p in products if p["product_id"] == i["product_id"]), products[0])["price"]) * i["quantity"]
+                        for i in cart
+                    ), 2)),
+                    "currency": "USD",
+                })
+                _send([ev])
+                events_emitted += 1
+
         elif step_type == "sleep":
             # Sleep a random amount within the range
             lo, hi = step.get("range", (0.1, 1.0))
@@ -250,14 +287,19 @@ def run_worker(
 def assign_profiles(n_users: int, seed: int) -> list[str]:
     """
     Assign profile names to n_users using a deterministic weighted shuffle.
-    Default mix: 60% visitor, 30% cart_abandoner, 10% buyer.
+    Default mix: 40% lina, 25% minh, 20% hoa, 15% quang (the 4 CDP personas).
+    Falls back to legacy mix for backwards compatibility.
     """
     rng = random.Random(seed)
-    weights = [("visitor", 60), ("cart_abandoner", 30), ("buyer", 10)]
+    weights = [
+        ("lina", 40),
+        ("minh", 25),
+        ("hoa", 20),
+        ("quang", 15),
+    ]
     pool: list[str] = []
     for name, weight in weights:
         pool.extend([name] * weight)
-    # Resample to fill n_users (deterministic via seed)
     return [rng.choice(pool) for _ in range(n_users)]
 
 
@@ -332,10 +374,11 @@ def main():
     print(f"  Elapsed:      {elapsed:.1f}s")
     print(f"  Rate (actual): {total_events / max(elapsed/60, 0.1):.0f} events/min")
     print(f"\nPer-profile counts:")
-    for profile_name in ("visitor", "cart_abandoner", "buyer"):
+    for profile_name in ("lina", "minh", "hoa", "quang"):
         cnt = sum(1 for r in results if r["profile"] == profile_name)
         evts = sum(r["events_emitted"] for r in results if r["profile"] == profile_name)
-        print(f"  {profile_name}: {cnt} users, {evts} events")
+        if cnt > 0:
+            print(f"  {profile_name}: {cnt} users, {evts} events")
 
     # Persist run metadata
     meta = {

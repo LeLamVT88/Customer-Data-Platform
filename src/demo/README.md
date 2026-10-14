@@ -104,6 +104,22 @@ Dòng dữ liệu từ hành động người dùng đến dashboard:
 
 ## Hướng dẫn chạy nhanh
 
+### 0 — Cài đặt dependencies (chỉ làm 1 lần)
+
+```powershell
+# Tạo virtualenv nếu chưa có
+python -m venv .venv
+
+# Kích hoạt virtualenv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# macOS/Linux:
+source .venv/bin/activate
+
+# Cài dependencies
+pip install -r src/demo/requirements.txt
+```
+
 ### 1 — Khởi động API
 
 ```powershell

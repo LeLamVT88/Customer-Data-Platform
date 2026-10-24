@@ -47,6 +47,15 @@ services:
         condition: service_healthy
       storage:
         condition: service_started
+    networks:
+      - default
+      # Đọc trực tiếp storage backend của Snowplow (Collector → Enrich → PostgreSQL).
+      - cdp-snowplow-net
+
+networks:
+  cdp-snowplow-net:
+    external: true
+    name: cdp-snowplow-net
 
 volumes:
   catalog-data:

@@ -10,3 +10,5 @@ build/
 .cache/
 # Demo logs
 logs/
+# Editor/tool backup artefacts
+*.docx.bak

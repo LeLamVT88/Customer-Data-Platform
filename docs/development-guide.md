@@ -318,13 +318,54 @@ The demo implements **4 user personas** with distinct event signatures:
 
 New event types: `cart_abandoned`, `apply_filter`, `wishlist_add`, `wishlist_remove`, `newsletter_signup`.
 
+### Snowplow replaces the demo backend
+
+The demo's own event-collection backend was removed. There is no `POST /api/events`,
+no server-side validation, and no `events.csv` / `quarantine.csv` writing. Event
+collection is now entirely Snowplow's job:
+
+| Concern | Owner |
+|---|---|
+| Client-side event capture | `@snowplow/browser-tracker` (UMD, `src/demo/web/vendor/`) |
+| Wire format | Snowplow Tracker Protocol 2 (`payload_data/jsonschema/1-0-4`) |
+| Schema validation | Snowplow Enrich, against Iglu schemas in `config/snowplow/iglu-client-embedded/` |
+| Enrichment | Snowplow Enrich (YAUAA device/browser/OS context) |
+| Storage | Snowplow Micro + PostgreSQL storage backend, table `events` |
+| Bad events | `failed = true` rows in `events` (Snowplow's bad stream) |
+| Query for the dashboard | `src/demo/api/server.py` — read-only over `events` via `psycopg` |
+
+The synthetic bot no longer POSTs to the FastAPI app either. It builds TP2 payloads
+directly (`src/demo/snowplow/tp2.py`) and sends them to the collector, so browser
+traffic and bot traffic land in the same pipeline and are validated by the same rules.
+
+Data flow:
+
+```
+Web SPA ─┐
+         ├─▶ Snowplow Micro (:9090) ──▶ Enrich (Iglu + YAUAA) ──▶ PostgreSQL events
+Bot (TP2)┘                                                          │
+                                                                    ├──▶ Demo API /api/summary ──▶ Dashboard
+                                                                    └──▶ Spark JDBC ──▶ Iceberg Bronze/Silver/Gold
+```
+
+The lakehouse job (`src/demo/lakehouse/ingest_demo.py`) reads the Snowplow PostgreSQL
+table over JDBC instead of reading CSV files. Bronze keeps every enriched event
+(including `failed` ones), Silver keeps only valid events, and
+`cdp.silver.demo_quarantine` holds the rows Snowplow Enrich rejected.
+
+Note: Apache Iceberg does not support column `DEFAULT` values, so the Iceberg DDL in
+`src/demo/lakehouse/sql/` carries no defaults — those are assigned in the Spark job.
+
 Quick-reference commands (from repo root, with `.venv` active):
 
 ```sh
 # Install deps
 pip install -r src/demo/requirements.txt
 
-# Start API
+# Start Snowplow collector + PostgreSQL storage
+docker compose -f config/docker/compose.snowplow.yml up -d --wait
+
+# Start API (read layer over Snowplow PostgreSQL)
 python -m src.demo.api.server
 
 # Start web (in a second terminal)
@@ -341,10 +382,18 @@ python -m src.demo.bot.driver --users 10 --profile quang
 
 # Run API tests
 python -m pytest src/demo/api/tests -q
+
+# Load Snowplow events into Iceberg and verify
+docker compose -f config/docker/compose.local-lakehouse.yml up -d --wait catalog storage
+docker compose -f config/docker/compose.local-lakehouse.yml run --rm spark \
+    /workspace/src/demo/lakehouse/ingest_demo.py --batch-id demo-local
+docker compose -f config/docker/compose.local-lakehouse.yml run --rm spark \
+    /workspace/src/demo/lakehouse/verify_demo.py --batch-id demo-local
 ```
 
 See [`src/demo/README.md`](src/demo/README.md) for full documentation including:
-- Architecture diagram (web → API → lakehouse)
+- Architecture diagram (web + bot → Snowplow → PostgreSQL → API / Iceberg)
 - Persona task flows
-- Event taxonomy table (16 event types)
+- Event taxonomy table (16 event types) and their Iglu schemas
 - Dashboard interpretation guide
+- Snowplow contract (TP2 fields, storage schema, troubleshooting)

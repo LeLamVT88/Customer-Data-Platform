@@ -1,5 +1,28 @@
 # Kế hoạch website demo thu thập hành vi người dùng
 
+> **⚠️ Cập nhật kiến trúc — tầng backend đã thay hoàn toàn bằng Snowplow**
+>
+> Kế hoạch gốc (mục 1–8) mô tả một backend tự viết: web POST sự kiện tới
+> `POST /api/events`, API validate rồi ghi `events.csv` / `quarantine.csv`.
+> Theo yêu cầu của thầy hướng dẫn, **toàn bộ logic backend đã được loại bỏ
+> và thay bằng Snowplow**:
+>
+> | Phần | Trước | Sau |
+> |---|---|---|
+> | Thu thập event | `navigator.sendBeacon` / `fetch` tới `/api/events` | `@snowplow/browser-tracker` gửi **TP2** tới collector |
+> | Validate | FastAPI tự kiểm tra field | **Snowplow Enrich** validate theo **Iglu schema** (`com.cdp.demo/*`) |
+> | Lưu trữ | CSV/Parquet local theo batch | **Snowplow Micro → PostgreSQL** bảng `events` |
+> | Event lỗi | `quarantine.csv` tự viết | Cột `failed = true` (bad stream của Snowplow) |
+> | Idempotency | checksum + ordinal | `event_id` UUID của Snowplow |
+> | Bridge sang pipeline | Spark đọc CSV | Spark đọc PostgreSQL qua **JDBC** |
+> | Bot | POST tới FastAPI | Gửi **TP2** thẳng tới collector (`src/demo/snowplow/tp2.py`) |
+> | Dashboard | đọc file batch local | `GET /api/summary` đọc bảng `events` (read layer) |
+>
+> Vì vậy các mục dưới đây mô tả **thiết kế đã bị thay thế** và được giữ lại làm
+> lịch sử kế hoạch. Tài liệu mô tả kiến trúc đang chạy hiện nay nằm ở
+> [`src/demo/README.md`](../src/demo/README.md) và phần "Demo website" trong
+> [`development-guide.md`](development-guide.md).
+
 Tài liệu này lập kế hoạch cho một website demo dùng để **phát sinh sự kiện hành vi
 người dùng** (page view, click, scroll, add-to-cart, purchase…) và gửi về pipeline
 Customer Data Platform. Mục tiêu là có một mặt phát sự kiện chuẩn hóa, có thể

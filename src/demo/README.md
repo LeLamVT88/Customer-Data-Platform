@@ -185,12 +185,17 @@ API lắng nghe tại `http://127.0.0.1:8000`. Các endpoint:
 ### 3 — Khởi động Web UI
 
 ```powershell
-# Trong terminal thứ hai
-cd src/demo/web
-python -m http.server 8081
+# Trong terminal thứ hai (từ thư mục gốc repo)
+.venv\Scripts\python.exe src\demo\web\serve.py --port 8081
 ```
 
 Mở `http://127.0.0.1:8081/` trong trình duyệt. Trang tự gửi event tới collector `:9090`.
+
+> **Dùng `serve.py`, không dùng `python -m http.server`.**
+> `http.server` không gửi header `Cache-Control`, nên trình duyệt cache ES module
+> (`js/*.js`) và giữ bản cũ. Sau khi `git pull`, trang vẫn chạy code cũ — dashboard
+> có thể hiện phần trùng lặp, event mới không được gửi. `serve.py` phát
+> `Cache-Control: no-store` nên mỗi lần reload đều lấy code mới nhất.
 
 ### 4 — Chạy Bot (tùy chọn)
 
@@ -294,6 +299,7 @@ docker exec cdp-snowplow-postgres psql -U snowplow -d snowplow -c "
 src/demo/
 ├── web/
 │   ├── index.html          # SPA entry (hash routing) + bootstrap tracker
+│   ├── serve.py            # Dev server tĩnh, tắt cache (no-store)
 │   ├── css/main.css        # Styles (mobile-friendly, CSS variables)
 │   ├── js/
 │   │   ├── tracker.js      # Lớp tracking: init tracker, track(), trackPageView()
@@ -385,8 +391,8 @@ docker compose -f config/docker/compose.snowplow.yml restart snowplow-micro
 # API
 .venv\Scripts\python.exe -m src.demo.api.server
 
-# Web UI
-cd src/demo/web; python -m http.server 8081
+# Web UI (no-cache dev server — xem ghi chú trong README)
+.venv\Scripts\python.exe src\demo\web\serve.py --port 8081
 
 # Bot smoke test
 .venv\Scripts\python.exe -m src.demo.bot.driver --users 5
@@ -419,6 +425,7 @@ curl http://127.0.0.1:8000/health
 | Triệu chứng | Nguyên nhân | Cách xử lý |
 |---|---|---|
 | Dashboard không đổi số liệu | Tracker đang gom event trong buffer | Đảm bảo `bufferSize: 1` trong `js/tracker.js` |
+| Trang hiện code cũ sau khi `git pull` | Trình duyệt cache ES module (dev server không gửi `Cache-Control`) | Dùng `python src/demo/web/serve.py` thay vì `python -m http.server`, rồi hard reload (Ctrl+Shift+R) |
 | `failed > 0` trong bảng `events` | Payload không khớp Iglu schema | Đọc log Micro (`docker logs cdp-snowplow-micro`) để xem field thiếu; sửa schema **và** payload cho khớp, rồi restart Micro |
 | Micro trả `400` | Sai định dạng TP2 | `ue_pr`/`co` phải là **JSON string**, không phải object |
 | API báo `snowplow_available=false` | Không kết nối được PostgreSQL | Kiểm tra `docker compose -f config/docker/compose.snowplow.yml ps` và biến `SNOWPLOW_PG_*` |

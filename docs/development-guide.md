@@ -368,8 +368,8 @@ docker compose -f config/docker/compose.snowplow.yml up -d --wait
 # Start API (read layer over Snowplow PostgreSQL)
 python -m src.demo.api.server
 
-# Start web (in a second terminal)
-cd src/demo/web && python -m http.server 8081
+# Start web (in a second terminal) — serve.py disables browser caching
+python src/demo/web/serve.py --port 8081
 
 # Run bot smoke test (mixed personas: 40% lina, 25% minh, 20% hoa, 15% quang)
 python -m src.demo.bot.driver --users 5

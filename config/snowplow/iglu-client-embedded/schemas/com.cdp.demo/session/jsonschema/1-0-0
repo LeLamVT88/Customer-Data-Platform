@@ -1,0 +1,21 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Phiên làm việc phía client. Snowplow tự quản lý domain_sessionid, entity này giữ session_id do ứng dụng cấp.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "session",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Định danh phiên do client sinh, UUID."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "session_id"
+  ]
+}

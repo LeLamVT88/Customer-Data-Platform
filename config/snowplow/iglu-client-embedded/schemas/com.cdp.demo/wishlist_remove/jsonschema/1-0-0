@@ -1,0 +1,21 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Sản phẩm bị xoá khỏi danh sách yêu thích.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "wishlist_remove",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Mã sản phẩm."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "product_id"
+  ]
+}

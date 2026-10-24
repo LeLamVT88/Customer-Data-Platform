@@ -1,0 +1,61 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Rời trang khi giỏ hàng vẫn còn sản phẩm.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "cart_abandoned",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "description": "Dòng sản phẩm còn lại trong giỏ.",
+      "items": {
+        "type": "object",
+        "description": "Một dòng sản phẩm trong giỏ hàng.",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "Mã sản phẩm trong catalog."
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Số lượng.",
+            "minimum": 1
+          },
+          "price": {
+            "type": "string",
+            "description": "Gá đơn vị, chuỗi decimal tối đa 2 chữ số thập phân. Không làm tròn và không suy ra currency từ giá."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Mã tiền tệ ISO 4217 do nguồn cung cấp."
+          }
+        },
+        "required": [
+          "product_id",
+          "quantity",
+          "price",
+          "currency"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "total_price": {
+      "type": "string",
+      "description": "Tổng tiền, chuỗi decimal tối đa 2 chữ số thập phân."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Mã tiền tệ ISO 4217."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "items",
+    "total_price",
+    "currency"
+  ]
+}

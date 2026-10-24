@@ -1,0 +1,21 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng đăng ký nhận bản tin.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "newsletter_signup",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Địa chỉ email."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "email"
+  ]
+}

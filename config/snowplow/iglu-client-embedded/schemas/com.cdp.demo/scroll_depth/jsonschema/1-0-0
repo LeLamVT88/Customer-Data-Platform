@@ -1,0 +1,21 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng cuộn trang tới một mức độ nhất định.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "scroll_depth",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "depth_percent": {
+      "type": "number",
+      "description": "Phần trăm chiều cao trang đã cuộn, 0-100."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "depth_percent"
+  ]
+}

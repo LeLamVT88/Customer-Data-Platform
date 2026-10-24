@@ -1,0 +1,29 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng gửi từ khoá tìm kiếm.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "search",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Từ khoá tìm kiếm."
+    },
+    "results_count": {
+      "type": "integer",
+      "description": "Số kết quả trả về."
+    },
+    "type": {
+      "type": "string",
+      "description": "Loại tìm kiếm, ví dụ 'catalog_search'."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "query"
+  ]
+}

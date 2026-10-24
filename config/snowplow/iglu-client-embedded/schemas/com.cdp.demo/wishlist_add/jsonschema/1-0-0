@@ -1,0 +1,29 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Sản phẩm được thêm vào danh sách yêu thích.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "wishlist_add",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Mã sản phẩm."
+    },
+    "price": {
+      "type": "string",
+      "description": "Giá bán tại thời điểm thêm."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Mã tiền tệ ISO 4217."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "product_id"
+  ]
+}

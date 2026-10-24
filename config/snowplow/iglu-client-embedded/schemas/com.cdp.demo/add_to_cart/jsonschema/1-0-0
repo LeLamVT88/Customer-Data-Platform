@@ -1,0 +1,45 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Sản phẩm được thêm vào giỏ hàng hoặc số lượng được tăng.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "add_to_cart",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Mã sản phẩm."
+    },
+    "quantity": {
+      "type": "integer",
+      "description": "Số lượng sau thay đổi.",
+      "minimum": 1
+    },
+    "price": {
+      "type": "string",
+      "description": "Gá đơn vị, chuỗi decimal tối đa 2 chữ số thập phân."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Mã tiền tệ ISO 4217."
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Danh mục phân cấp."
+    },
+    "updated": {
+      "type": "boolean",
+      "description": "True khi sự kiện này là tăng số lượng, không phải thêm mới."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "product_id",
+    "quantity",
+    "price",
+    "currency"
+  ]
+}

@@ -1,0 +1,63 @@
+services:
+  # ── Snowplow Micro: Collector + Stream Enrich (gộp trong một tiến trình) ──
+  # Tương đương tầng 1 (Collector) + tầng 2 (Enrich) của pipeline Snowplow.
+  #   - Collector: nhận event theo Tracker Protocol 2, gán event_id + collector_tstamp.
+  #   - Enrich:    validate event theo Iglu schema, làm giàu (YAUAA, geo, campaign).
+  #   - Storage:   ghi enriched event vào PostgreSQL để dashboard truy vấn.
+  snowplow-micro:
+    image: snowplow/snowplow-micro:4.6.1
+    container_name: cdp-snowplow-micro
+    command:
+      - "--config"
+      - "/config/micro.conf"
+      - "--iglu"
+      - "/config/iglu.json"
+      - "--yauaa"
+      - "--storage"
+      - "/config/storage.conf"
+    depends_on:
+      snowplow-postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9090:9090"
+    environment:
+      MICRO_POSTGRESQL_PASSWORD: cdp-local-snowplow
+      # Debug log để chẩn đoán lỗi validate/extract event.
+      JAVA_TOOL_OPTIONS: "-Dorg.slf4j.simpleLogger.defaultLogLevel=debug -Dorg.slf4j.simpleLogger.logFile=/dev/stdout"
+    volumes:
+      # Iglu client embedded: /config/iglu-client-embedded/schemas/<vendor>/...
+      - ../../config/snowplow/iglu-client-embedded:/config/iglu-client-embedded:ro
+      - ../../config/snowplow/micro.conf:/config/micro.conf:ro
+      - ../../config/snowplow/iglu.json:/config/iglu.json:ro
+      - ../../config/snowplow/storage.conf:/config/storage.conf:ro
+    networks:
+      - cdp-snowplow-net
+
+  # ── PostgreSQL: storage backend của Snowplow Micro ────────────────────────
+  snowplow-postgres:
+    image: postgres:16.10-bookworm
+    container_name: cdp-snowplow-postgres
+    environment:
+      POSTGRES_DB: snowplow
+      POSTGRES_USER: snowplow
+      POSTGRES_PASSWORD: cdp-local-snowplow
+    volumes:
+      - snowplow-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snowplow -d snowplow"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    ports:
+      # Expose ra host cho Demo API (read layer) và Spark (lakehouse) đọc trực tiếp.
+      # Chỉ bind loopback để không mở cổng ra mạng ngoài.
+      - "127.0.0.1:5432:5432"
+    networks:
+      - cdp-snowplow-net
+
+networks:
+  cdp-snowplow-net:
+    name: cdp-snowplow-net
+
+volumes:
+  snowplow-pg-data:

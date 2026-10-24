@@ -1,0 +1,37 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Thuộc tính sản phẩm dùng chung cho nhiều event.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "product",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Mã sản phẩm."
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Danh mục phân cấp."
+    },
+    "brand": {
+      "type": "string",
+      "description": "Thương hiệu."
+    },
+    "price": {
+      "type": "string",
+      "description": "Giá bán, chuỗi decimal tối đa 2 chữ số thập phân."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Mã tiền tệ ISO 4217."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "product_id"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng áp dụng bộ lọc danh mục.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "apply_filter",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "filter_type": {
+      "type": "string",
+      "description": "Loại bộ lọc, ví dụ 'category'."
+    },
+    "filter_value": {
+      "type": "string",
+      "description": "Giá trị bộ lọc."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "filter_type"
+  ]
+}

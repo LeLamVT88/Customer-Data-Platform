@@ -1,0 +1,29 @@
+{
+  "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-3",
+  "data": {
+    "cacheSize": 500,
+    "cacheTtl": 600,
+    "repositories": [
+      {
+        "name": "CDP Demo static schemas",
+        "priority": 0,
+        "vendorPrefixes": ["com.cdp.demo"],
+        "connection": {
+          "embedded": {
+            "path": "/config/iglu-client-embedded"
+          }
+        }
+      },
+      {
+        "name": "Iglu Central",
+        "priority": 0,
+        "vendorPrefixes": ["com.snowplowanalytics"],
+        "connection": {
+          "http": {
+            "uri": "https://iglucentral.com"
+          }
+        }
+      }
+    ]
+  }
+}

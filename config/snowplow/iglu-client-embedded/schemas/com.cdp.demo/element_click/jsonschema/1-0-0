@@ -1,0 +1,29 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng bấm một phần tử UI cụ thể.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "element_click",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "selector": {
+      "type": "string",
+      "description": "CSS selector của phần tử."
+    },
+    "tag": {
+      "type": "string",
+      "description": "Tên thẻ HTML."
+    },
+    "sort": {
+      "type": "string",
+      "description": "Giá trị sắp xếp nếu phần tử là dropdown."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "selector"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng chuyển trang trong web demo.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "page_view",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Đường dẫn trang, ví dụ '/catalog'."
+    },
+    "title": {
+      "type": "string",
+      "description": "Tiêu đề trang."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "path"
+  ]
+}

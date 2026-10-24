@@ -1,0 +1,37 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Người dùng xem chi tiết hoặc thẻ sản phẩm.",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "product_view",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Mã sản phẩm."
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Danh mục phân cấp, ví dụ 'electronics.audio'."
+    },
+    "price": {
+      "type": "string",
+      "description": "Giá bán, chuỗi decimal tối đa 2 chữ số thập phân."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Mã tiền tệ ISO 4217."
+    },
+    "source": {
+      "type": "string",
+      "description": "Nguồn điều hướng tới sản phẩm, ví dụ 'recommendation'."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "product_id"
+  ]
+}

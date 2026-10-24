@@ -4,18 +4,25 @@
 
 Synthetic user traffic generator for the Customer Data Platform demo pipeline.
 
+The bot speaks **Snowplow Tracker Protocol 2 (TP2)** and posts directly to the
+Snowplow Micro collector. It never calls the demo API — Snowplow owns event
+collection, validation and enrichment end to end.
+
+```
+bot ──TP2 POST──▶ Snowplow Micro :9090 ──▶ Enrich ──▶ PostgreSQL `events`
+```
+
 ## Quick start
 
 ```powershell
-# Terminal 1 — start the API
+# Terminal 1 — start the Snowplow stack (collector + PostgreSQL storage)
+docker compose -f config/docker/compose.snowplow.yml up -d --wait
+
+# Terminal 2 — start the API (read layer, optional for the bot itself)
 python -m src.demo.api.server
 
-# Terminal 2 — start the web (optional, bot doesn't need it)
-cd src/demo/web
-python -m http.server 8080
-
 # Terminal 3 — run the bot
-python -m src.demo.bot.driver --users 5          # smoke test
+python -m src.demo.bot.driver --users 5            # smoke test
 python -m src.demo.bot.driver --users 200          # full run (default)
 python -m src.demo.bot.driver --users 200 --rate 10000  # 10k events/min target
 ```
@@ -42,16 +49,25 @@ The mix is deterministic: the same `--seed` always produces the same profile ass
 
 ## Output
 
-Each bot run writes metadata to:
+Each bot run writes run metadata to:
+
 ```
 data/demo-events/bot-run-YYYYMMDDHHMMSS.json
 ```
 
-Individual event batches are stored by the API at:
-```
-data/demo-events/<batch-id>/events.csv
-data/demo-events/<batch-id>/quarantine.csv
-data/demo-events/<batch-id>/manifest.json
+Event payloads themselves are **not** written to local files. They live in the
+Snowplow PostgreSQL `events` table, where validation failures are marked with
+`failed = true` (the bad stream) instead of a separate quarantine file.
+
+To inspect what a run produced:
+
+```sql
+-- events emitted by the bot in the last hour
+SELECT event_name, count(*), count(*) FILTER (WHERE failed) AS failed
+FROM events
+WHERE name_tracker = 'cdpDemoBot'
+  AND timestamp >= now() - interval '1 hour'
+GROUP BY event_name;
 ```
 
 ## Scenario-based runs
@@ -71,7 +87,9 @@ print(scenario["expected"])
 
 - The bot uses a thread pool (not `asyncio`) to simplify compatibility with
   the existing `.venv` environment.
-- Events are sent in micro-batches to the API; rate limiting is approximate.
+- Events are sent in micro-batches of TP2 payloads; rate limiting is approximate.
 - No external network calls are made by the bot (self-contained).
-- The API must be running at `http://127.0.0.1:8000` (override with
-  `CDP_DEMO_API` env var).
+- The Snowplow collector must be reachable at `http://127.0.0.1:9090`
+  (override with `SNOWPLOW_COLLECTOR_URL`).
+- The web app URL is only used to fill the `url` field of emitted events
+  (override with `CDP_DEMO_WEB_URL`, default `http://localhost:8081/`).

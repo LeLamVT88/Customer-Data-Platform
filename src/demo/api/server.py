@@ -1,316 +1,255 @@
 """
-src/demo/api/server.py — Demo Event Collection API (FastAPI)
+src/demo/api/server.py — Read-only query API trên top của Snowplow.
 
-Endpoints
---------
-GET  /api/catalog          Returns the static product catalog JSON.
-POST /api/events           Ingests a batch of events, assigns ordinal/batch_id,
-                           runs schema checks, routes bad rows to quarantine.
-GET  /api/summary          Returns per-batch counts for the dashboard.
-GET  /health               Simple health check.
+Backend KHÔNG còn tự thu thập, validate hay lưu event. Toàn bộ phần đó đã
+được giao cho Snowplow:
 
-Idempotency
------------
-batch_id is derived from the content of the incoming payload (SHA-256 of the
-serialised JSON body).  Rerunning the same payload returns HTTP 200 with the
-existing manifest and does NOT write new files.
+    Snowplow Browser Tracker ──▶ Collector (Micro :9090)
+                                          │
+                                          ▼
+                               Enrich (Iglu validate + YAUAA)
+                                          │
+                                          ▼
+                               PostgreSQL (storage backend)
 
-Quota / Quality Rules
---------------------
-- event_type must be in SUPPORTED_EVENT_TYPES.
-- event_time must be a valid ISO 8601 UTC timestamp.
-- Missing session_id → quarantined (strict mode, default ON).
-- Missing user_id    → quarantined (strict mode, default ON).
-- price in payload must be a non-negative decimal string; currency is required.
+Endpoint còn lại ở đây chỉ phục vụ hai việc:
+
+- ``GET /api/catalog``  — trả về danh mục sản phẩm tĩnh (không phải event data).
+- ``GET /api/summary``  — tổng hợp số liệu từ enriched event trong PostgreSQL
+  cho dashboard.
+
+Tổng hợp được đọc trực tiếp từ bảng ``events`` mà Snowplow Micro ghi, theo
+đúng cấu trúc enriched event của Snowplow:
+
+    events(event_id, timestamp, event_json, failed, app_id, event_name,
+           platform, name_tracker, domain_userid, v_tracker, user_id,
+           network_userid)
+
+Event của CDP Demo là *self-describing event*, nên:
+
+- ``event_name`` = tên event lấy từ Iglu schema (``product_view``, ...).
+- payload nằm trong ``event_json -> unstruct_event -> data -> data``.
+- entity ``com.cdp.demo/session`` nằm trong ``event_json -> contexts``.
+
+Nếu Snowplow chưa chạy, endpoint trả về payload rỗng kèm cờ
+``snowplow_available=false`` để dashboard hiển thị hướng dẫn thay vì lỗi 500.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
-import re
 import threading
-import uuid
-from datetime import datetime, timezone
+from contextlib import closing
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-import fastapi
-from fastapi import FastAPI, HTTPException
+import psycopg
+from psycopg.rows import dict_row
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 
-ROOT = Path(__file__).resolve().parents[3]          # repo root
+ROOT = Path(__file__).resolve().parents[3]
 CATALOG_PATH = ROOT / "config" / "demo" / "catalog.products.json"
-EVENTS_ROOT = ROOT / "data" / "demo-events"
-EVENTS_ROOT.mkdir(parents=True, exist_ok=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 CATALOG: list[dict] = []
 _catalog_lock = threading.Lock()
 
-SUPPORTED_EVENT_TYPES: set[str] = {
-    "page_view", "product_view", "add_to_cart", "remove_from_cart",
-    "begin_checkout", "purchase_observed", "element_click",
-    "scroll_depth", "search", "error",
-    # New persona-driven event types
-    "cart_abandoned", "apply_filter", "wishlist_add", "wishlist_remove",
-    "newsletter_signup",
-}
+# app_id gắn vào mọi event của CDP Demo (xem src/demo/web/js/tracker.js).
+APP_ID = os.getenv("CDP_DEMO_APP_ID", "cdp-demo")
 
-_INGESTION_LOCK = threading.Lock()   # serialise writes within a single process
+SNOWPLOW_PG_HOST = os.getenv("SNOWPLOW_PG_HOST", "127.0.0.1")
+SNOWPLOW_PG_PORT = int(os.getenv("SNOWPLOW_PG_PORT", "5432"))
+SNOWPLOW_PG_DATABASE = os.getenv("SNOWPLOW_PG_DATABASE", "snowplow")
+SNOWPLOW_PG_USER = os.getenv("SNOWPLOW_PG_USER", "snowplow")
+SNOWPLOW_PG_PASSWORD = os.getenv("SNOWPLOW_PG_PASSWORD", "cdp-local-snowplow")
 
-# ── Data models ───────────────────────────────────────────────────────────────
+# Cửa sổ thời gian dùng cho dashboard (mặc định 24 giờ gần nhất).
+SUMMARY_WINDOW_HOURS = int(os.getenv("CDP_DEMO_WINDOW_HOURS", "24"))
 
-class IncomingEvent(BaseModel):
-    event_type: str
-    event_time: str
-    session_id: str | None = None
-    user_id: str | None = None
-    namespace: str = "cdp.demo.events"
-    source: str = "web-demo"
-    url: str = ""
-    referrer: str = ""
-    user_agent: str = ""
-    viewport: str = ""
-    payload: dict = Field(default_factory=dict)
-
-    @field_validator("event_time")
-    @classmethod
-    def _valid_timestamp(cls, v: str) -> str:
-        # Accept ISO 8601 with up to millisecond precision
-        try:
-            dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
-        except ValueError as exc:
-            raise ValueError(f"Invalid ISO 8601 timestamp: {v}") from exc
-        if dt.tzinfo is None:
-            raise ValueError(f"event_time must include timezone (UTC): {v}")
-        return v
-
-    @field_validator("event_type")
-    @classmethod
-    def _valid_event_type(cls, v: str) -> str:
-        if v not in SUPPORTED_EVENT_TYPES:
-            raise ValueError(f"Unsupported event_type: {v}")
-        return v
+# Vendor của schema CDP Demo — dùng để lọc entity khi rút session_id.
+CDP_VENDOR = "com.cdp.demo"
 
 
-class EventBatchResponse(BaseModel):
-    batch_id: str
-    total_accepted: int
-    total_quarantined: int
-    event_checksum: str
-    message: str
-
-
-class SummaryResponse(BaseModel):
-    batch_id: str
-    event_count: int
-    counts: dict[str, int]
-    missing_session_count: int
-    missing_user_count: int
-    unique_users: int
-    unique_sessions: int
-
-
-# ── Catalog loader ─────────────────────────────────────────────────────────────
+# ── Catalog loader ────────────────────────────────────────────────────────────
 
 def _load_catalog() -> list[dict]:
     with _catalog_lock:
-        if CATALOG:
-            return CATALOG
-        if CATALOG_PATH.exists():
+        if not CATALOG and CATALOG_PATH.exists():
             with open(CATALOG_PATH, encoding="utf-8") as f:
                 CATALOG.extend(json.load(f))
         return CATALOG
 
 
-# ── Core ingestion logic ──────────────────────────────────────────────────────
+# ── Snowplow access ───────────────────────────────────────────────────────────
 
-def _compute_event_id(namespace: str, batch_checksum: str, ordinal: int) -> str:
-    raw = f"{namespace}:{batch_checksum}:{ordinal}"
-    return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def _batch_checksum(events: list[dict]) -> str:
-    """Stable SHA-256 of the serialised event list for idempotency."""
-    payload = json.dumps(events, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def ingest_events(
-    events: list[IncomingEvent],
-    strict_user: bool = True,
-) -> tuple[EventBatchResponse, list[dict]]:
-    """
-    Process a batch of incoming events:
-      1. Validate each event.
-      2. Assign ordinal, ingestion_time, event_id.
-      3. Route bad rows to quarantine.
-      4. Write CSV + manifest (idempotent by batch_checksum).
-    Returns (response, quarantined_rows).
-    """
-    raw_events = [e.model_dump() for e in events]
-    batch_checksum = _batch_checksum(raw_events)
-
-    with _INGESTION_LOCK:
-        # Check idempotency — look for an existing manifest with the same checksum
-        existing = _find_existing_batch(batch_checksum)
-        if existing:
-            manifest = existing
-            batch_id = manifest["batch_id"]
-        else:
-            batch_id = str(uuid.uuid4())
-            accepted_rows: list[dict] = []
-            quarantine_rows: list[dict] = []
-
-            ingestion_time = datetime.now(timezone.utc).isoformat()
-
-            for ordinal, raw in enumerate(raw_events, start=1):
-                ev = raw.copy()
-                q_flags: list[str] = []
-
-                # Session check
-                if not ev.get("session_id"):
-                    q_flags.append("missing_session")
-                # User check
-                if strict_user and not ev.get("user_id"):
-                    q_flags.append("missing_user_id")
-
-                if q_flags:
-                    ev["quality_flags"] = q_flags
-                    ev["ordinal"] = ordinal
-                    ev["ingestion_time"] = ingestion_time
-                    ev["batch_id"] = batch_id
-                    ev["event_id"] = _compute_event_id(ev["namespace"], batch_checksum, ordinal)
-                    quarantine_rows.append(ev)
-                else:
-                    ev["quality_flags"] = []
-                    ev["ordinal"] = ordinal
-                    ev["ingestion_time"] = ingestion_time
-                    ev["batch_id"] = batch_id
-                    ev["event_id"] = _compute_event_id(ev["namespace"], batch_checksum, ordinal)
-                    accepted_rows.append(ev)
-
-            batch_dir = EVENTS_ROOT / batch_id
-            batch_dir.mkdir(parents=True, exist_ok=True)
-
-            events_file = batch_dir / "events.csv"
-            q_file = batch_dir / "quarantine.csv"
-
-            _write_csv(events_file, accepted_rows)
-            _write_csv(q_file, quarantine_rows)
-
-            # Compute per-event-type counts
-            counts: dict[str, int] = {}
-            for r in accepted_rows:
-                key = f"{r['namespace']}/{r['event_type']}"
-                counts[key] = counts.get(key, 0) + 1
-
-            unique_users = len({r["user_id"] for r in accepted_rows if r.get("user_id")})
-            unique_sessions = len({r["session_id"] for r in accepted_rows if r.get("session_id")})
-            missing_sessions = sum(1 for r in quarantine_rows if "missing_session" in r.get("quality_flags", []))
-            missing_users = sum(1 for r in quarantine_rows if "missing_user_id" in r.get("quality_flags", []))
-
-            manifest = {
-                "batch_id": batch_id,
-                "batch_checksum": batch_checksum,
-                "event_count": len(accepted_rows),
-                "quarantine_count": len(quarantine_rows),
-                "counts": counts,
-                "missing_session_count": missing_sessions,
-                "missing_user_count": missing_users,
-                "unique_users": unique_users,
-                "unique_sessions": unique_sessions,
-                "ingestion_time": ingestion_time,
-                "strict_user": strict_user,
-                "source": "demo-api",
-            }
-
-            with open(batch_dir / "manifest.json", "w", encoding="utf-8") as f:
-                json.dump(manifest, f, indent=2)
-
-    resp = EventBatchResponse(
-        batch_id=batch_id,
-        total_accepted=manifest["event_count"],
-        total_quarantined=manifest["quarantine_count"],
-        event_checksum=batch_checksum,
-        message="Batch ingested successfully." if not existing else "Batch already exists (idempotent rerun).",
+def _connect():
+    return psycopg.connect(
+        host=SNOWPLOW_PG_HOST,
+        port=SNOWPLOW_PG_PORT,
+        dbname=SNOWPLOW_PG_DATABASE,
+        user=SNOWPLOW_PG_USER,
+        password=SNOWPLOW_PG_PASSWORD,
+        connect_timeout=5,
+        row_factory=dict_row,
     )
-    return resp, manifest.get("quarantine_count", 0)
 
 
-def _find_existing_batch(checksum: str) -> dict | None:
-    """Return manifest if a batch with this checksum already exists."""
-    for batch_dir in EVENTS_ROOT.iterdir():
-        if not batch_dir.is_dir():
-            continue
-        manifest_path = batch_dir / "manifest.json"
-        if manifest_path.exists():
-            try:
-                with open(manifest_path, encoding="utf-8") as f:
-                    m = json.load(f)
-                if m.get("batch_checksum") == checksum:
-                    return m
-            except Exception:
-                continue
-    return None
+def _payload_of(event_json: dict, event_name: str) -> dict:
+    """
+    Lấy payload của self-describing event.
+
+    Payload được lưu ở cột phẳng ``unstruct_event_<vendor>_<name>_<số>``,
+    ví dụ ``unstruct_event_com_cdp_demo_product_view_1``.
+    """
+    prefix = f"unstruct_event_com_cdp_demo_{event_name}_"
+    for key, value in event_json.items():
+        if key.startswith(prefix) and isinstance(value, dict):
+            return value
+    return {}
 
 
-def _write_csv(path: Path, rows: list[dict]) -> None:
-    if not rows:
-        # Write empty file with headers only
-        headers = list(rows[0].keys()) if rows else [
-            "event_id", "event_time", "event_type", "session_id", "user_id",
-            "namespace", "source", "url", "referrer", "user_agent", "viewport",
-            "payload", "quality_flags", "ordinal", "batch_id", "ingestion_time",
-        ]
-        with open(path, "w", encoding="utf-8", newline="") as f:
-            f.write(",".join(headers) + "\n")
-        return
-    import csv, io, json as _json
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=list(rows[0].keys()))
-    writer.writeheader()
-    for row in rows:
-        # Serialise complex fields
-        row = dict(row)
-        for k, v in row.items():
-            if isinstance(v, (dict, list)):
-                row[k] = _json.dumps(v)
-        writer.writerow(row)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(output.getvalue())
+def _empty_summary(message: str = "", window_hours: int = SUMMARY_WINDOW_HOURS) -> dict[str, Any]:
+    return {
+        "event_count": 0,
+        "counts": {},
+        "failed_count": 0,
+        "unique_users": 0,
+        "unique_sessions": 0,
+        "cart_abandon_rate": 0,
+        "top_searches": [],
+        "top_wishlist": [],
+        "categories": [],
+        "window_hours": window_hours,
+        "snowplow_available": False,
+        "message": message,
+    }
 
 
-def _latest_manifest() -> dict | None:
-    """Return the most recently-written manifest."""
-    manifests = []
-    for d in EVENTS_ROOT.iterdir():
-        if not d.is_dir():
-            continue
-        mp = d / "manifest.json"
-        if mp.exists():
-            try:
-                with open(mp, encoding="utf-8") as f:
-                    m = json.load(f)
-                manifests.append((os.path.getmtime(mp), m))
-            except Exception:
-                continue
-    if not manifests:
-        return None
-    manifests.sort(key=lambda x: x[0], reverse=True)
-    return manifests[0][1]
+def _query_summary(window_hours: int) -> dict[str, Any]:
+    """Tổng hợp số liệu từ enriched event trong Snowplow PostgreSQL."""
+    since = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+
+    counts: dict[str, int] = {}
+    search_terms: dict[str, int] = {}
+    wishlist_items: dict[str, int] = {}
+    categories: dict[str, int] = {}
+    unique_users: set[str] = set()
+    unique_sessions: set[str] = set()
+    failed_count = 0
+    event_count = 0
+
+    with closing(_connect()) as conn:
+        with conn.cursor() as cur:
+            # 1) Đếm theo loại event + số event lỗi.
+            cur.execute(
+                """
+                SELECT event_name,
+                       COUNT(*) AS n,
+                       COUNT(*) FILTER (WHERE failed) AS n_failed
+                FROM events
+                WHERE timestamp >= %s AND app_id = %s
+                GROUP BY event_name
+                """,
+                (since, APP_ID),
+            )
+            for row in cur.fetchall():
+                name = row["event_name"] or "unknown"
+                counts[name] = row["n"] - row["n_failed"]
+                failed_count += row["n_failed"]
+                event_count += row["n"] - row["n_failed"]
+
+            # 2) Người dùng / phiên duy nhất.
+            #    session_id nằm trong entity com.cdp.demo/session do app gửi lên.
+            cur.execute(
+                """
+                SELECT DISTINCT user_id FROM events
+                WHERE timestamp >= %s AND app_id = %s AND NOT failed
+                  AND user_id IS NOT NULL
+                """,
+                (since, APP_ID),
+            )
+            unique_users = {r["user_id"] for r in cur.fetchall() if r["user_id"]}
+
+            cur.execute(
+                """
+                SELECT DISTINCT session_id
+                FROM (
+                    SELECT e.event_json -> 'contexts_com_cdp_demo_session_1' -> 0 ->> 'session_id'
+                           AS session_id
+                    FROM events e
+                    WHERE e.timestamp >= %s AND e.app_id = %s AND NOT e.failed
+                ) s
+                WHERE session_id IS NOT NULL
+                """,
+                (since, APP_ID),
+            )
+            unique_sessions = {r["session_id"] for r in cur.fetchall() if r["session_id"]}
+
+            # 3) Payload cần cho các bảng top (search / wishlist / category).
+            cur.execute(
+                """
+                SELECT event_name, event_json
+                FROM events
+                WHERE timestamp >= %s AND app_id = %s AND NOT failed
+                  AND event_name IN ('search', 'wishlist_add', 'product_view')
+                """,
+                (since, APP_ID),
+            )
+            for row in cur.fetchall():
+                name = row["event_name"]
+                payload = _payload_of(row["event_json"] or {}, name)
+                if name == "search":
+                    query = (payload.get("query") or "").strip()
+                    if query:
+                        search_terms[query] = search_terms.get(query, 0) + 1
+                elif name == "wishlist_add":
+                    product_id = payload.get("product_id")
+                    if product_id:
+                        wishlist_items[product_id] = wishlist_items.get(product_id, 0) + 1
+                elif name == "product_view":
+                    category_id = payload.get("category_id")
+                    if category_id:
+                        categories[category_id] = categories.get(category_id, 0) + 1
+
+    cart_add = counts.get("add_to_cart", 0)
+    cart_abandoned = counts.get("cart_abandoned", 0)
+    cart_abandon_rate = round(cart_abandoned / cart_add * 100) if cart_add else 0
+
+    return {
+        "event_count": event_count,
+        "counts": counts,
+        "failed_count": failed_count,
+        "unique_users": len(unique_users),
+        "unique_sessions": len(unique_sessions),
+        "cart_abandon_rate": cart_abandon_rate,
+        "top_searches": [
+            {"query": q, "count": c}
+            for q, c in sorted(search_terms.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+        ],
+        "top_wishlist": [
+            {"product_id": p, "count": c}
+            for p, c in sorted(wishlist_items.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+        ],
+        "categories": [
+            {"category_id": c, "count": n}
+            for c, n in sorted(categories.items(), key=lambda kv: (-kv[1], kv[0]))[:12]
+        ],
+        "window_hours": window_hours,
+        "snowplow_available": True,
+        "message": "",
+    }
 
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 
-app = FastAPI(title="CDP Demo Event API", version="1.0.0")
+app = FastAPI(title="CDP Demo API (Snowplow read layer)", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -327,54 +266,25 @@ async def health():
 
 @app.get("/api/catalog")
 async def get_catalog():
-    catalog = _load_catalog()
-    return JSONResponse(content=catalog)
-
-
-@app.post("/api/events", response_model=EventBatchResponse)
-async def post_events(
-    events: list[IncomingEvent] = fastapi.Body(...),
-    strict_user: bool = True,
-):
-    if not events:
-        raise HTTPException(status_code=400, detail="Empty event batch")
-    resp, _ = ingest_events(events, strict_user=strict_user)
-    return resp
+    return JSONResponse(content=_load_catalog())
 
 
 @app.get("/api/summary")
-async def get_summary(batch_id: str | None = None):
-    if batch_id:
-        manifest_path = EVENTS_ROOT / batch_id / "manifest.json"
-        if not manifest_path.exists():
-            raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
-        with open(manifest_path, encoding="utf-8") as f:
-            manifest = json.load(f)
-    else:
-        manifest = _latest_manifest()
-        if not manifest:
-            return JSONResponse(content={
-                "batch_id": "none",
-                "event_count": 0,
-                "counts": {},
-                "missing_session_count": 0,
-                "missing_user_count": 0,
-                "unique_users": 0,
-                "unique_sessions": 0,
-            })
-
-    return JSONResponse(content={
-        "batch_id": manifest["batch_id"],
-        "event_count": manifest["event_count"],
-        "counts": manifest.get("counts", {}),
-        "missing_session_count": manifest.get("missing_session_count", 0),
-        "missing_user_count": manifest.get("missing_user_count", 0),
-        "unique_users": manifest.get("unique_users", 0),
-        "unique_sessions": manifest.get("unique_sessions", 0),
-    })
+async def get_summary():
+    try:
+        summary = _query_summary(SUMMARY_WINDOW_HOURS)
+    except psycopg.Error as exc:
+        detail = str(exc).strip()
+        return JSONResponse(content=_empty_summary(
+            message=(
+                f"Không kết nối được Snowplow PostgreSQL ({SNOWPLOW_PG_HOST}:"
+                f"{SNOWPLOW_PG_PORT}/{SNOWPLOW_PG_DATABASE}): {detail}"
+            )
+        ))
+    return JSONResponse(content=summary)
 
 
-# ── CLI entrypoint ─────────────────────────────────────────────────────────────
+# ── CLI entrypoint ────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,5 +1,10 @@
 /**
- * src/demo/web/js/dashboard.js — Redesigned CDP Dashboard
+ * src/demo/web/js/dashboard.js — CDP Demo Dashboard (đọc từ Snowplow)
+ *
+ * Nguồn dữ liệu duy nhất là Demo API, và Demo API đọc trực tiếp từ
+ * PostgreSQL storage backend của Snowplow:
+ *
+ *   Snowplow Collector ──▶ Enrich ──▶ PostgreSQL ──▶ Demo API ──▶ dashboard
  *
  * Features:
  *  - Per-persona funnel view (Lina / Minh / Hoa / Quang)
@@ -69,29 +74,16 @@ async function fetchJSON(url) {
 
 async function fetchSummary() { return fetchJSON('/api/summary'); }
 
-/** Fetch last 24h events from the latest batch for richer analysis */
-async function fetchRecentEvents(limit = 2000) {
-  const data = await fetchSummary();
-  if (!data || !data.batch_id || data.batch_id === 'none') return [];
-  // We parse events.csv of the latest batch for richer insights
-  try {
-    const res = await fetch(`${API_BASE}/api/catalog`); // catalog is cached; use events raw
-    // Instead, use a synthetic analysis from the summary counts + known event types
-    return data;
-  } catch (_) {}
-  return data;
-}
-
 // ── Persona funnel reconstruction ────────────────────────────────────────────
-// We derive funnel stats from the event summary counts.
-// Key event types per persona:
+// Event type trong summary là tên Iglu schema (product_view, add_to_cart, ...).
+// Mỗi persona để lại một "chữ ký" sự kiện đặc trưng:
 //   Lina (Window Shopper): product_view, page_view, scroll_depth
 //   Minh (Decisive Buyer): product_view → add_to_cart → begin_checkout → purchase_observed
 //   Hoa (Researcher): search, product_view, scroll_depth
 //   Quang (Cart Abandoner): add_to_cart, cart_abandoned
 
 function derivePersonaStats(counts) {
-  const get = (key) => counts[`cdp.demo.events/${key}`] || 0;
+  const get = (key) => counts[key] || 0;
   return {
     lina: {
       product_views: get('product_view'),
@@ -116,22 +108,18 @@ function derivePersonaStats(counts) {
   };
 }
 
-function funnelRate(steps, dropAfter) {
-  const first = steps[0] || 1;
-  return steps.map((v, i) => i >= dropAfter ? Math.round((v / first) * 100) : Math.round((v / first) * 100));
-}
-
 // ── Render: stats cards ───────────────────────────────────────────────────────
 
 function renderStatsCards(summary) {
-  const { event_count = 0, counts = {}, unique_users = 0, unique_sessions = 0 } = summary;
+  const {
+    event_count = 0,
+    counts = {},
+    unique_users = 0,
+    unique_sessions = 0,
+    cart_abandon_rate = 0,
+    failed_count = 0,
+  } = summary;
   const typeEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-  const cartAddCount = counts['cdp.demo.events/add_to_cart'] || 0;
-  const cartAbandonedCount = counts['cdp.demo.events/cart_abandoned'] || 0;
-  const cartAbandonRate = cartAddCount > 0
-    ? Math.round((cartAbandonedCount / cartAddCount) * 100)
-    : 0;
 
   return `
     <div class="stats-grid">
@@ -148,16 +136,21 @@ function renderStatsCards(summary) {
         <div class="stat-label">Phiên duy nhất</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" style="color:${cartAbandonRate > 50 ? 'var(--danger)' : 'var(--success)'}">
-          ${cartAbandonRate}%
+        <div class="stat-value" style="color:${cart_abandon_rate > 50 ? 'var(--danger)' : 'var(--success)'}">
+          ${cart_abandon_rate}%
         </div>
         <div class="stat-label">Tỷ lệ bỏ giỏ hàng</div>
       </div>
       ${typeEntries.slice(0, 4).map(([k, v]) => `
         <div class="stat-card">
           <div class="stat-value" style="font-size:1.5rem">${v.toLocaleString()}</div>
-          <div class="stat-label">${k.split('/').pop()}</div>
+          <div class="stat-label">${k}</div>
         </div>`).join('')}
+      ${failed_count > 0 ? `
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--warning)">${failed_count.toLocaleString()}</div>
+          <div class="stat-label">Event lỗi (bad stream)</div>
+        </div>` : ''}
     </div>`;
 }
 
@@ -165,7 +158,7 @@ function renderStatsCards(summary) {
 
 function renderPersonaFunnels(personaStats, summary) {
   const { counts = {} } = summary;
-  const get = (key) => counts[`cdp.demo.events/${key}`] || 0;
+  const get = (key) => counts[key] || 0;
 
   const purchaseCount = get('purchase_observed');
   const cartAdd = get('add_to_cart');
@@ -173,7 +166,7 @@ function renderPersonaFunnels(personaStats, summary) {
 
   return `
     <div class="card" style="margin-top:1.5rem">
-      <h3 class="section-title">👤 Phễu hành vi theo nhân khẩu học (24 giờ gần nhất)</h3>
+      <h3 class="section-title">👤 Phễu hành vi theo nhân khẩu học</h3>
       <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
         Mỗi persona để lại một "chữ ký" sự kiện đặc trưng trên dashboard.
       </p>
@@ -289,7 +282,7 @@ function renderPersonaFunnels(personaStats, summary) {
         <h4 style="font-size:.9rem;margin-bottom:.5rem">Phễu chuyển đổi của Minh (Buyer)</h4>
         <div style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
           ${[
-            { label: 'product_view', count: get('product_view') || (purchaseCount * 5) },
+            { label: 'product_view', count: get('product_view') },
             { label: 'add_to_cart', count: cartAdd },
             { label: 'begin_checkout', count: checkoutCount },
             { label: 'purchase', count: purchaseCount },
@@ -313,57 +306,45 @@ function renderPersonaFunnels(personaStats, summary) {
 // ── Render: Top search queries & wishlisted products ─────────────────────────
 
 function renderInsightLists(summary) {
-  const { counts = {} } = summary;
-  const get = (key) => counts[`cdp.demo.events/${key}`] || 0;
+  const { counts = {}, top_searches = [], top_wishlist = [] } = summary;
+  const searchCount = counts['search'] || 0;
+  const wishlistCount = counts['wishlist_add'] || 0;
 
-  const searchCount = get('search');
-  const wishlistCount = get('wishlist_add');
+  const searchRows = top_searches.length
+    ? top_searches.map((s) => `
+        <li>
+          <span class="insight-label">${s.query}</span>
+          <span class="insight-count">${s.count}</span>
+        </li>`).join('')
+    : `<li><span class="insight-label">Chưa có dữ liệu</span><span class="insight-count">—</span></li>`;
 
-  // For demo, we show aggregate counts since we don't have raw event payloads in summary.
-  // These values are proxies — in a real implementation, aggregate from a query API.
+  const wishlistRows = top_wishlist.length
+    ? top_wishlist.map((w) => `
+        <li>
+          <span class="insight-label">${w.product_id}</span>
+          <span class="insight-count">${w.count}</span>
+        </li>`).join('')
+    : `<li><span class="insight-label">Chưa có dữ liệu</span><span class="insight-count">—</span></li>`;
+
   return `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem">
       <div class="card">
         <h3 class="section-title">🔍 Top tìm kiếm (search)</h3>
         <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
           ${searchCount > 0
-            ? `${searchCount} sự kiện search được ghi nhận.`
+            ? `${searchCount} sự kiện search được ghi nhận trong Snowplow.`
             : 'Chưa có sự kiện search. Hãy thử thanh tìm kiếm ở trang danh mục.'}
         </p>
-        <ul class="insight-list">
-          <li>
-            <span class="insight-label">Lượt search (tổng)</span>
-            <span class="insight-count">${searchCount}</span>
-          </li>
-          <li>
-            <span class="insight-label">Sản phẩm tìm kiếm cao nhất</span>
-            <span class="insight-count">${searchCount > 0 ? 'P001…' : '—'}</span>
-          </li>
-        </ul>
-        <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem">
-          Để xem chi tiết top queries, chạy bot với ≥50 users hoặc truy vấn file batch.
-        </p>
+        <ul class="insight-list">${searchRows}</ul>
       </div>
       <div class="card">
         <h3 class="section-title">🤍 Top wishlist (wishlist_add)</h3>
         <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
           ${wishlistCount > 0
-            ? `${wishlistCount} sự kiện wishlist được ghi nhận.`
-            : 'Chưa có sự kiện wishlist. Nhấn nút Wishlist trên trang chi tiết sản phẩm.'}
+            ? `${wishlistCount} sự kiện wishlist được ghi nhận trong Snowplow.`
+            : 'Chưa có sự kiện wishlist. Nhấn nút 🤍 Wishlist trên trang chi tiết sản phẩm.'}
         </p>
-        <ul class="insight-list">
-          <li>
-            <span class="insight-label">Lượt wishlist (tổng)</span>
-            <span class="insight-count">${wishlistCount}</span>
-          </li>
-          <li>
-            <span class="insight-label">Sản phẩm wishlist cao nhất</span>
-            <span class="insight-count">${wishlistCount > 0 ? 'P002…' : '—'}</span>
-          </li>
-        </ul>
-        <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem">
-          Click nút 🤍 Wishlist trên trang chi tiết sản phẩm để kích hoạt sự kiện wishlist_add.
-        </p>
+        <ul class="insight-list">${wishlistRows}</ul>
       </div>
     </div>`;
 }
@@ -385,22 +366,28 @@ async function renderDashboard() {
     return;
   }
 
-  const { batch_id = '—', event_count = 0, counts = {} } = summary;
+  if (summary.snowplow_available === false) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>⚠️ Không đọc được dữ liệu từ Snowplow.</p>
+        <p>${summary.message || 'Snowplow Micro / PostgreSQL chưa chạy.'}</p>
+        <p>Khởi động bằng: <code>docker compose -f config/docker/compose.snowplow.yml up -d</code></p>
+      </div>`;
+    return;
+  }
+
+  const { event_count = 0, counts = {}, window_hours = 24 } = summary;
   const typeEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const labels = typeEntries.map(([k]) => k.replace('cdp.demo.events/', ''));
+  const labels = typeEntries.map(([k]) => k);
   const values = typeEntries.map(([, v]) => v);
 
   const personaStats = derivePersonaStats(counts);
 
-  // Derive category breakdown from product_view events
-  const catEntries = Object.entries({})
-    .concat(Object.entries(counts).filter(([k]) => k.startsWith('cdp.demo.events/product_view')))
-    .slice(0, 1); // Placeholder — real impl would aggregate from raw events
-
   container.innerHTML = `
     <h2>CDP Demo Dashboard</h2>
     <p style="color:var(--muted);font-size:.85rem">
-      Batch: <code>${batch_id.slice(0, 12)}…</code> — Cập nhật lần cuối: ${new Date().toLocaleTimeString('vi-VN')}
+      Nguồn: <code>Snowplow PostgreSQL</code> — ${event_count.toLocaleString()} sự kiện trong ${window_hours} giờ gần nhất.
+      Cập nhật lần cuối: ${new Date().toLocaleTimeString('vi-VN')}
     </p>
 
     ${renderStatsCards(summary)}
@@ -445,10 +432,10 @@ async function renderDashboard() {
     </div>`;
 
   drawBarChart('chart-events', labels, values, '#0d6efd');
-  drawBarChart('chart-categories',
-    ['electronics', 'clothing', 'home', 'books', 'sports', 'beauty', 'toys', 'grocery'],
-    [42, 31, 18, 12, 9, 7, 5, 3],
-    '#6f42c1');
+
+  const catLabels = (summary.categories || []).map((c) => c.category_id);
+  const catValues = (summary.categories || []).map((c) => c.count);
+  drawBarChart('chart-categories', catLabels, catValues, '#6f42c1');
 }
 
 // ── Auto-refresh ─────────────────────────────────────────────────────────────

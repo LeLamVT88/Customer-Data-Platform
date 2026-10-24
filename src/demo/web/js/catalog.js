@@ -7,7 +7,11 @@
  *   Minh (Decisive Buyer)  → product_view → add_to_cart → checkout → purchase
  *   Hoa (Researcher)       → search → product_view × N → specs, no purchase
  *   Quang (Cart Abandoner) → add_to_cart × N → cart → abandon
+ *
+ * Event tracking is delegated to js/tracker.js (Snowplow Browser Tracker).
  */
+
+import { track, trackProduct, flushEvents, getUserId, getSessionId } from './tracker.js';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -156,94 +160,11 @@ export function loadCart() {
   } catch (_) { _cart = []; }
 }
 
-// ── Identity helpers ────────────────────────────────────────────────────────
-
-function getOrCreateUserId() {
-  const COOKIE_NAME = 'cdp_demo_uid';
-  try {
-    const existing = document.cookie.split('; ').find(r => r.startsWith(COOKIE_NAME + '='));
-    if (existing) return existing.split('=')[1];
-    const uid = 'u_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-    const exp = new Date(Date.now() + 90 * 864e5).toUTCString();
-    document.cookie = `${COOKIE_NAME}=${uid}; expires=${exp}; path=/; SameSite=Lax`;
-    return uid;
-  } catch (_) {
-    return 'uid_' + Math.random().toString(36).slice(2);
-  }
-}
-
-let _sessionId = null;
-export function getSessionId() {
-  if (!_sessionId) _sessionId = crypto.randomUUID();
-  return _sessionId;
-}
-
-export function getUserId() {
-  try { return getOrCreateUserId(); } catch (_) { return 'uid_fallback'; }
-}
-
 // ── Event tracking ─────────────────────────────────────────────────────────
-
-const _eventQueue = [];
-let _flushTimer = null;
-let _batchId = crypto.randomUUID();
-
-const SUPPORTED_EVENT_TYPES = new Set([
-  'page_view', 'product_view', 'add_to_cart', 'remove_from_cart',
-  'begin_checkout', 'purchase_observed', 'element_click',
-  'scroll_depth', 'search', 'error',
-  // New persona-driven event types
-  'cart_abandoned', 'apply_filter', 'wishlist_add', 'wishlist_remove',
-  'newsletter_signup',
-]);
-
-export function track(eventType, payload = {}) {
-  if (!SUPPORTED_EVENT_TYPES.has(eventType)) return;
-  const event = {
-    event_type: eventType,
-    event_time: new Date().toISOString(),
-    session_id: getSessionId(),
-    user_id: getUserId(),
-    namespace: 'cdp.demo.events',
-    source: 'web-demo',
-    url: location.href,
-    referrer: document.referrer || '',
-    user_agent: navigator.userAgent,
-    viewport: `${window.innerWidth}x${window.innerHeight}`,
-    payload,
-    _client_batch_id: _batchId,
-  };
-  _eventQueue.push(event);
-  scheduleFlush();
-}
-
-function scheduleFlush() {
-  if (_flushTimer) return;
-  _flushTimer = setTimeout(flushEvents, 5000);
-}
-
-export async function flushEvents() {
-  if (_flushTimer) { clearTimeout(_flushTimer); _flushTimer = null; }
-  if (_eventQueue.length === 0) return;
-  const batch = [..._eventQueue];
-  _eventQueue.length = 0;
-  try {
-    const res = await fetch(`${API_BASE}/api/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(batch),
-      keepalive: true,
-    });
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const result = await res.json();
-    showStatus(`Flushed ${batch.length} event(s) — batch ${result.batch_id.slice(0, 8)}…`);
-    _batchId = crypto.randomUUID();
-    return result;
-  } catch (e) {
-    _eventQueue.unshift(...batch);
-    showStatus(`Event flush failed: ${e.message} — will retry`, true);
-  }
-}
+// Tracking do Snowplow Browser Tracker đảm nhiệm (xem js/tracker.js).
+// Các hàm track/trackProduct/flushEvents được re-export để các module khác
+// (index.html, dashboard.js) dùng chung một đường đi event.
+export { track, trackProduct, flushEvents, getUserId, getSessionId };
 
 // Cart-abandoned flag — fire only once per session
 let _cartAbandonedFired = false;
@@ -252,28 +173,17 @@ window.addEventListener('beforeunload', () => {
   // Fire cart_abandoned if cart has items and hasn't been fired this session
   if (getCart().length > 0 && !_cartAbandonedFired) {
     _cartAbandonedFired = true;
-    const cartItems = getCart().map(i => ({ product_id: i.product_id, quantity: i.quantity, price: i.price }));
-    const payload = { items: cartItems, total_price: cartTotal().toFixed(2), currency: 'USD' };
-    const event = {
-      event_type: 'cart_abandoned',
-      event_time: new Date().toISOString(),
-      session_id: _sessionId || getSessionId(),
-      user_id: getUserId(),
-      namespace: 'cdp.demo.events',
-      source: 'web-demo',
-      url: location.href,
-      referrer: document.referrer || '',
-      user_agent: navigator.userAgent,
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
-      payload,
-      _client_batch_id: _batchId,
-    };
-    navigator.sendBeacon(`${API_BASE}/api/events`, JSON.stringify([event]));
+    // Iglu schema cart_abandoned yêu cầu currency trong từng item.
+    const cartItems = getCart().map(i => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      price: i.price,
+      currency: i.currency || 'USD',
+    }));
+    track('cart_abandoned', { items: cartItems, total_price: cartTotal().toFixed(2), currency: 'USD' });
   }
-  // Flush any remaining events
-  if (_eventQueue.length > 0) {
-    navigator.sendBeacon(`${API_BASE}/api/events`, JSON.stringify([..._eventQueue]));
-  }
+  // Đẩy nốt event còn trong buffer của Snowplow.
+  flushEvents();
 });
 
 // ── Navigation ───────────────────────────────────────────────────────────────
@@ -428,7 +338,7 @@ export function renderHomePage(containerId) {
       recentGrid.innerHTML = recent.map(p => renderProductCard(p)).join('');
       recentGrid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', () => {
-          track('product_view', { product_id: card.dataset.id, source: 'recently_viewed' });
+          trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id, source: 'recently_viewed' }, getProduct(card.dataset.id));
           navigate(`#product?id=${card.dataset.id}`);
         });
       });
@@ -442,7 +352,7 @@ export function renderHomePage(containerId) {
       recsGrid.innerHTML = recs.map(p => renderProductCard(p)).join('');
       recsGrid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', () => {
-          track('product_view', { product_id: card.dataset.id, source: 'recommendation' });
+          trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id, source: 'recommendation' }, getProduct(card.dataset.id));
           navigate(`#product?id=${card.dataset.id}`);
         });
       });
@@ -520,7 +430,7 @@ export async function renderCatalogPage(containerId) {
       card.addEventListener('click', e => {
         // Don't navigate if clicking quick-add button
         if (e.target.classList.contains('btn-quick-add')) return;
-        track('product_view', { product_id: card.dataset.id });
+        trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id }, getProduct(card.dataset.id));
         navigate(`#product?id=${card.dataset.id}`);
       });
     });
@@ -531,7 +441,7 @@ export async function renderCatalogPage(containerId) {
         const product = getProduct(btn.dataset.id);
         if (!product) return;
         addToCart(product, 1);
-        track('add_to_cart', { product_id: product.product_id, quantity: 1, price: product.price, currency: product.currency });
+        trackProduct('add_to_cart', { product_id: product.product_id, quantity: 1, price: product.price, currency: product.currency }, product);
         showStatus(`Đã thêm ${product.product_id} vào giỏ hàng`);
         updateNavCartBadge();
         // Brief highlight
@@ -618,13 +528,13 @@ export async function renderProductPage(containerId) {
   document.getElementById('btn-add-cart').addEventListener('click', () => {
     const qty = parseInt(document.getElementById('qty-select').value);
     addToCart(product, qty);
-    track('add_to_cart', {
+    trackProduct('add_to_cart', {
       product_id: product.product_id,
       quantity: qty,
       price: product.price,
       currency: product.currency,
       category_id: product.category_id,
-    });
+    }, product);
     showStatus(`Đã thêm ${product.product_id} ×${qty} vào giỏ hàng`);
     updateNavCartBadge();
   });
@@ -636,11 +546,11 @@ export async function renderProductPage(containerId) {
     if (wishlisted) {
       btn.textContent = '💛 Đã Wishlist';
       msg.textContent = 'Đã thêm vào wishlist!';
-      track('wishlist_add', { product_id: product.product_id, price: product.price, currency: product.currency });
+      trackProduct('wishlist_add', { product_id: product.product_id, price: product.price, currency: product.currency }, product);
     } else {
       btn.textContent = '🤍 Wishlist';
       msg.textContent = 'Đã xóa khỏi wishlist.';
-      track('wishlist_remove', { product_id: product.product_id });
+      trackProduct('wishlist_remove', { product_id: product.product_id }, product);
     }
     msg.style.display = 'block';
     setTimeout(() => { msg.style.display = 'none'; }, 3000);
@@ -701,7 +611,7 @@ export function renderCartPage(containerId) {
   container.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', () => {
       removeFromCart(btn.dataset.id);
-      track('remove_from_cart', { product_id: btn.dataset.id });
+      trackProduct('remove_from_cart', { product_id: btn.dataset.id }, getProduct(btn.dataset.id));
       renderCartPage(containerId);
       updateNavCartBadge();
     });
@@ -715,7 +625,7 @@ export function renderCartPage(containerId) {
       if (item) {
         item.quantity = newQty;
         saveCart();
-        track('add_to_cart', { product_id: productId, quantity: newQty, price: item.price, currency: item.currency, updated: true });
+        trackProduct('add_to_cart', { product_id: productId, quantity: newQty, price: item.price, currency: item.currency, updated: true }, item);
         renderCartPage(containerId);
         updateNavCartBadge();
       }
@@ -820,6 +730,6 @@ export function renderCheckoutPage(containerId) {
 
     clearCart();
     updateNavCartBadge();
-    await flushEvents();
+    flushEvents();
   });
 }

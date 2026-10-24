@@ -53,15 +53,24 @@
 
   <div id="status-bar"></div>
 
+  <!-- Snowplow Browser Tracker: gửi event thẳng tới Collector (Micro :9090) -->
+  <script src="vendor/snowplow-browser-tracker.min.js"></script>
   <script type="module">
     import {
       onRoute, loadCatalog, loadCart, updateNavCartBadge,
       renderHomePage, renderCatalogPage, renderProductPage, renderCartPage,
       renderCheckoutPage, showStatus, flushEvents,
     } from './js/catalog.js';
+    import { initTracker, trackPageView, trackScrollDepth, trackError } from './js/tracker.js';
     import { renderDashboard, startAutoRefresh, stopAutoRefresh } from './js/dashboard.js';
 
-    // Initialise
+    // Khởi tạo Snowplow tracker trước khi gửi bất kỳ event nào.
+    try {
+      initTracker();
+    } catch (err) {
+      console.error('Snowplow tracker init failed:', err);
+      showStatus('Không khởi tạo được Snowplow tracker: ' + (err.message || err), true);
+    }
     loadCatalog().catch(err => {
       console.error('Catalog load failed:', err);
       showStatus('Tải danh mục thất bại: ' + (err.message || err), true);
@@ -69,11 +78,44 @@
     loadCart();
     updateNavCartBadge();
 
+    // Lỗi JS phía client cũng là một nguồn dữ liệu hành vi — gửi về
+    // Snowplow theo schema com.cdp.demo/error/jsonschema/1-0-0.
+    window.addEventListener('error', e => {
+      trackError(e.message || 'Unknown error', e.error && e.error.stack);
+    });
+    window.addEventListener('unhandledrejection', e => {
+      const reason = e.reason || {};
+      trackError(String(reason.message || reason), reason.stack);
+    });
+
     function setActiveLink(hash) {
       document.querySelectorAll('.nav-link').forEach(a => {
         const page = a.dataset.page;
         a.classList.toggle('active', hash.startsWith('#' + page));
       });
+    }
+
+    // ── Snowplow: page_view theo route ─────────────────────────────────────
+    // Route là hash-based (#catalog, #product?id=...). Ta chuẩn hoá thành
+    // path kiểu "/catalog", "/product" để khớp với page_view mà bot sinh ra.
+    const ROUTE_TITLES = {
+      home: 'Trang chủ',
+      catalog: 'Danh mục sản phẩm',
+      product: 'Chi tiết sản phẩm',
+      cart: 'Giỏ hàng',
+      checkout: 'Thanh toán',
+      dashboard: 'Dashboard',
+    };
+
+    function routePath(hash) {
+      const raw = (hash || '#home').slice(1).split('?')[0] || 'home';
+      // Route "home" được quy về "/" để khớp với page_view mà bot sinh ra.
+      return raw === 'home' ? '/' : '/' + raw;
+    }
+
+    function routeTitle(hash) {
+      const raw = (hash || '#home').slice(1).split('?')[0] || 'home';
+      return ROUTE_TITLES[raw] || '';
     }
 
     async function router() {
@@ -104,7 +146,33 @@
         document.getElementById('page-home').classList.add('active');
         renderHomePage('home-content');
       }
+
+      // Gửi page_view sau khi route đã render xong.
+      trackPageView(routePath(hash), routeTitle(hash));
     }
+
+    // ── Snowplow: scroll_depth ─────────────────────────────────────────────
+    // Gửi một event cho mỗi mốc 25% / 50% / 75% / 100% đã cuộn.
+    const scrollMilestones = new Set();
+    let scrollTimer = null;
+
+    function onScroll() {
+      const doc = document.documentElement;
+      const total = (doc.scrollHeight || 0) - window.innerHeight;
+      if (total <= 0) return;
+      const percent = Math.min(100, Math.round((window.scrollY / total) * 100));
+      for (const milestone of [25, 50, 75, 100]) {
+        if (percent >= milestone && !scrollMilestones.has(milestone)) {
+          scrollMilestones.add(milestone);
+          trackScrollDepth(milestone);
+        }
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(onScroll, 150);
+    }, { passive: true });
 
     onRoute(router);
   </script>

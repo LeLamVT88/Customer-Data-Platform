@@ -1,0 +1,21 @@
+collector {
+  license.accept = true
+  interface = "0.0.0.0"
+  port = 8080
+  cookie {
+    enabled = true
+    name = cdp_snowplow
+    secure = false
+    httpOnly = true
+    sameSite = Lax
+  }
+  streams {
+    sink.producerConf."security.protocol" = PLAINTEXT
+    buffer { byteLimit = 100000, recordLimit = 40, timeLimit = 1000 }
+    good { name = "cdp.web.raw", brokers = "kafka:9092" }
+    bad { name = "cdp.web.collector_bad", brokers = "kafka:9092" }
+    good.producerConf."security.protocol" = PLAINTEXT
+    bad.producerConf."security.protocol" = PLAINTEXT
+  }
+  telemetry.disable = true
+}

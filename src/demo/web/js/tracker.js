@@ -4,10 +4,10 @@
  * Toàn bộ logic thu thập event nằm ở đây và do Snowplow Browser Tracker đảm
  * nhiệm. Pipeline Snowplow lo phần còn lại:
  *
- *   JS Tracker ──HTTP──▶ Collector (Micro) ──▶ Enrich (Iglu + YAUAA)
+ *   JS Tracker ──HTTP──▶ Collector Kafka ──▶ Enrich (Iglu + YAUAA)
  *                                                    │
  *                                                    ▼
- *                                       PostgreSQL (storage backend)
+ *                                       Kafka good/bad → observer PostgreSQL
  *
  * Mỗi event type của CDP Demo có một Iglu schema riêng trong
  * config/snowplow/iglu-client-embedded/schemas/com.cdp.demo/.
@@ -18,8 +18,8 @@
  *   <script src="vendor/snowplow-browser-tracker.min.js"></script>
  */
 
-/** Collector URL. Mặc định trỏ về Snowplow Micro trong Docker Compose. */
-export const COLLECTOR_URL = 'http://127.0.0.1:9090';
+/** Collector URL. Mặc định trỏ về Snowplow Collector Kafka trong Docker Compose. */
+export const COLLECTOR_URL = `http://${location.hostname}:9091`;
 
 /** app_id — định danh ứng dụng trong Snowplow. */
 export const APP_ID = 'cdp-demo';
@@ -59,6 +59,7 @@ export const EVENT_TYPES = Object.freeze([
   'wishlist_add',
   'wishlist_remove',
   'newsletter_signup',
+  'identity_authenticated',
 ]);
 
 /** Entity: định danh phiên do ứng dụng cấp. */
@@ -74,6 +75,18 @@ const USER_COOKIE = 'cdp_demo_uid';
 const SESSION_KEY = 'cdp_demo_sid';
 
 let _sessionId = null;
+let _customerId = null;
+
+export function getRunId() {
+  let id = sessionStorage.getItem('cdp_demo_run');
+  if (!id) { id = 'web-' + crypto.randomUUID(); sessionStorage.setItem('cdp_demo_run', id); }
+  return id;
+}
+
+export function setCustomerId(id) {
+  _customerId = id || null;
+  if (_initialised) sp().setUserId(_customerId);
+}
 
 /** user_id ổn định theo cookie (90 ngày), dùng cho cột atomic user_id. */
 export function getUserId() {
@@ -128,7 +141,7 @@ export function initTracker() {
     bufferSize: 1,
   });
 
-  snowplow.setUserId(getUserId());
+  snowplow.setUserId(_customerId);
 
   _initialised = true;
 }
@@ -185,7 +198,12 @@ export function trackError(message, stack = '') {
 
 /** Entity session, gắn vào mọi event để truy vết được session_id. */
 function sessionContext() {
-  return [{ schema: SESSION_ENTITY, data: { session_id: getSessionId() } }];
+  const source = { run_id: getRunId(), anonymous_id: getUserId() };
+  if (_customerId) source.customer_id = _customerId;
+  return [
+    { schema: SESSION_ENTITY, data: { session_id: getSessionId() } },
+    { schema: schemaUri('source'), data: source },
+  ];
 }
 
 /**
@@ -222,7 +240,7 @@ export function track(eventType, data = {}, contexts = []) {
 
   sp().trackSelfDescribingEvent({
     event: {
-      schema: schemaUri(eventType),
+      schema: schemaUri(eventType, ['begin_checkout', 'purchase_observed'].includes(eventType) && data.order_id ? '1-0-1' : '1-0-0'),
       data,
     },
     // Entity session luôn có mặt; entity product thêm theo ngữ cảnh.

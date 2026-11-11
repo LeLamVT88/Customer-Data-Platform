@@ -1,0 +1,25 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "self": {
+    "vendor": "com.cdp.demo",
+    "name": "identity_authenticated",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "link_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "customer_id",
+    "link_id"
+  ],
+  "additionalProperties": false
+}

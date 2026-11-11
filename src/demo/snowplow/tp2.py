@@ -6,7 +6,7 @@ Tracker dùng ở frontend, nên bot và web ghi vào cùng một pipeline Snowp
 
 Gói TP2 gửi tới Collector:
 
-    POST http://127.0.0.1:9090/com.snowplowanalytics.snowplow/tp2
+    POST http://127.0.0.1:9091/com.snowplowanalytics.snowplow/tp2
     Content-Type: application/json
 
     {
@@ -53,7 +53,7 @@ import httpx
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-COLLECTOR_URL = "http://127.0.0.1:9090"
+COLLECTOR_URL = "http://127.0.0.1:9091"
 TP2_PATH = "/com.snowplowanalytics.snowplow/tp2"
 
 VENDOR = "com.cdp.demo"
@@ -104,6 +104,10 @@ def build_event(
     url: str = "http://localhost:8081/",
     event_id: str | None = None,
     event_time_ms: str | None = None,
+    run_id: str | None = None,
+    anonymous_id: str | None = None,
+    customer_id: str | None = None,
+    persona: str | None = None,
 ) -> dict[str, Any]:
     """
     Dựng một self-describing event theo TP2.
@@ -119,12 +123,19 @@ def build_event(
     unstruct_event = {
         "schema": UNSTRUCT_EVENT_SCHEMA,
         "data": {
-            "schema": event_schema_uri(event_type),
+            "schema": schema_uri(event_type, "1-0-1" if event_type in ("begin_checkout", "purchase_observed") and "order_id" in data else SCHEMA_VERSION),
             "data": data,
         },
     }
 
     entities: list[dict[str, Any]] = []
+    if run_id:
+        source = {"run_id": run_id, "anonymous_id": anonymous_id or user_id or "unknown"}
+        if customer_id:
+            source["customer_id"] = customer_id
+        if persona:
+            source["persona"] = persona
+        entities.append({"schema": entity_schema_uri("source"), "data": source})
     if session_id:
         entities.append({
             "schema": entity_schema_uri("session"),

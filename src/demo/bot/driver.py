@@ -7,13 +7,10 @@ Usage
     python -m src.demo.bot.driver --users 5    # smoke test
     python -m src.demo.bot.driver --users 50 --rate 10000 --seed 42
 
-Bot KHÔNG còn POST tới Demo API. Nó gửi event theo Snowplow Tracker Protocol 2
-(``tp2``) thẳng tới Collector, giống hệt Browser Tracker ở frontend:
-
-    Bot ──TP2──▶ Collector (Micro :9090) ──▶ Enrich (Iglu) ──▶ PostgreSQL
-
-Nhờ vậy bot và web ghi vào cùng một pipeline, cùng bảng ``events``, cùng cách
-validate theo Iglu schema. Demo API chỉ còn vai trò đọc để dựng dashboard.
+Bot chỉ phát tracking TP2 tới Collector, không gọi API nghiệp vụ.
+Mặc định dùng Kafka Collector :9091; dùng --collector http://127.0.0.1:9090
+nếu muốn chạy với Snowplow Micro cũ. Dùng src.demo.sources.generate để tạo
+hành trình có tài khoản, đơn hàng và bằng chứng liên kết danh tính.
 """
 
 from __future__ import annotations
@@ -29,15 +26,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-# __file__ = src/demo/bot/driver.py
-# parents[0] = src/demo/bot/
-# parents[1] = src/demo/
-# parents[2] = src/
-# parents[3] = repo root
-_REPO = Path(__file__).resolve().parents[3]
-# Add src/ on path so "from src.demo.bot.profiles import ..." works
-sys.path.insert(0, str(_REPO / "src"))
-ROOT = _REPO   # repo root: config/ and data/ are here
+ROOT = Path(__file__).resolve().parents[3]
 
 # Windows console mặc định dùng cp1252, không in được tiếng Việt.
 # Ép UTF-8 (và bỏ qua lỗi encode) để log tiếng Việt không làm sập tiến trình.
@@ -47,6 +36,7 @@ try:
 except Exception:  # pragma: no cover - console không hỗ trợ reconfigure
     pass
 
+from src.demo.catalog import load_catalog
 from src.demo.bot.profiles import build_profile
 from src.demo.snowplow.tp2 import COLLECTOR_URL, SnowplowCollector, build_event
 
@@ -57,13 +47,6 @@ WEB_URL = os.getenv("CDP_DEMO_WEB_URL", "http://localhost:8081/")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-
-def load_catalog() -> list[dict]:
-    """Load catalog once per process; each worker gets a random sample."""
-    path = ROOT / "config" / "demo" / "catalog.products.json"
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
 
 def pick_products(catalog: list[dict], n: int, rng: random.Random) -> list[dict]:
     return rng.sample(catalog, min(n, len(catalog)))
@@ -294,9 +277,8 @@ def run_worker(
 
 def assign_profiles(n_users: int, seed: int) -> list[str]:
     """
-    Assign profile names to n_users using a deterministic weighted shuffle.
+    Assign profile names with seeded weighted sampling.
     Default mix: 40% lina, 25% minh, 20% hoa, 15% quang (the 4 CDP personas).
-    Falls back to legacy mix for backwards compatibility.
     """
     rng = random.Random(seed)
     weights = [

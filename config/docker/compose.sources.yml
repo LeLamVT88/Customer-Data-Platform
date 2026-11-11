@@ -1,0 +1,99 @@
+name: cdp-sources
+services:
+  kafka:
+    image: apache/kafka:4.1.0
+    hostname: kafka
+    ports: ["127.0.0.1:19092:19092"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://127.0.0.1:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes: ["kafka-data:/var/lib/kafka/data"]
+    healthcheck:
+      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+  topics:
+    image: apache/kafka:4.1.0
+    depends_on:
+      kafka: {condition: service_healthy}
+    entrypoint: [/bin/bash, /config/create-topics.sh]
+    volumes: ["../kafka/create-topics.sh:/config/create-topics.sh:ro"]
+  schemas:
+    image: nginx:1.28-alpine
+    volumes: ["../snowplow/iglu-client-embedded:/usr/share/nginx/html:ro"]
+  collector:
+    image: snowplow/scala-stream-collector-kafka:3.9.0
+    command: [--config, /config/collector.hocon]
+    environment:
+      JAVA_OPTS: -Xms128m -Xmx384m
+    ports: ["127.0.0.1:9091:8080"]
+    volumes: ["../snowplow/collector.kafka.hocon:/config/collector.hocon:ro"]
+    depends_on:
+      topics: {condition: service_completed_successfully}
+  enrich:
+    image: snowplow/snowplow-enrich-kafka:6.14.1
+    command: [--config, /config/enrich.hocon, --iglu-config, /config/iglu.json, --enrichments, /config/enrichments]
+    environment:
+      JAVA_OPTS: -Xms256m -Xmx768m -XX:ActiveProcessorCount=2
+    volumes:
+      - ../snowplow/enrich.kafka.hocon:/config/enrich.hocon:ro
+      - ../snowplow/iglu.kafka.json:/config/iglu.json:ro
+      - ../snowplow/enrichments:/config/enrichments:ro
+    depends_on:
+      topics: {condition: service_completed_successfully}
+      schemas: {condition: service_started}
+  business-db:
+    image: postgres:16.10-bookworm
+    command: [postgres, -c, wal_level=logical, -c, max_replication_slots=4, -c, max_wal_senders=4]
+    environment:
+      POSTGRES_DB: business
+      POSTGRES_USER: cdp
+      POSTGRES_PASSWORD: cdp-local-business
+    ports: ["127.0.0.1:15433:5432"]
+    volumes:
+      - business-data:/var/lib/postgresql/data
+      - ../business/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U cdp -d business]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  connect:
+    image: quay.io/debezium/connect:3.3.1.Final
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: cdp-sources-connect
+      CONFIG_STORAGE_TOPIC: cdp.connect.configs
+      OFFSET_STORAGE_TOPIC: cdp.connect.offsets
+      STATUS_STORAGE_TOPIC: cdp.connect.status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      HEAP_OPTS: -Xms256m -Xmx512m
+    ports: ["127.0.0.1:8083:8083"]
+    depends_on:
+      topics: {condition: service_completed_successfully}
+      business-db: {condition: service_healthy}
+volumes:
+  kafka-data:
+  business-data:

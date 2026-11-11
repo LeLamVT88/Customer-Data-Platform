@@ -12,8 +12,10 @@
  */
 
 import { track, trackProduct, flushEvents, getUserId, getSessionId } from './tracker.js';
+import { getRunId } from './tracker.js';
+import { api, refreshCustomer, escapeHTML } from './account.js';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = `http://${location.hostname}:8000`;
 
 let _catalog = null;
 let _cart = [];
@@ -338,8 +340,7 @@ export function renderHomePage(containerId) {
       recentGrid.innerHTML = recent.map(p => renderProductCard(p)).join('');
       recentGrid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', () => {
-          trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id, source: 'recently_viewed' }, getProduct(card.dataset.id));
-          navigate(`#product?id=${card.dataset.id}`);
+          navigate(`#product?id=${card.dataset.id}&source=recently_viewed`);
         });
       });
     }
@@ -352,8 +353,7 @@ export function renderHomePage(containerId) {
       recsGrid.innerHTML = recs.map(p => renderProductCard(p)).join('');
       recsGrid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', () => {
-          trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id, source: 'recommendation' }, getProduct(card.dataset.id));
-          navigate(`#product?id=${card.dataset.id}`);
+          navigate(`#product?id=${card.dataset.id}&source=recommendation`);
         });
       });
     }
@@ -430,8 +430,7 @@ export async function renderCatalogPage(containerId) {
       card.addEventListener('click', e => {
         // Don't navigate if clicking quick-add button
         if (e.target.classList.contains('btn-quick-add')) return;
-        trackProduct('product_view', { product_id: card.dataset.id, category_id: getProduct(card.dataset.id)?.category_id }, getProduct(card.dataset.id));
-        navigate(`#product?id=${card.dataset.id}`);
+        navigate(`#product?id=${card.dataset.id}&source=catalog`);
       });
     });
 
@@ -495,6 +494,10 @@ export async function renderProductPage(containerId) {
     return;
   }
 
+  trackProduct('product_view', {
+    product_id: product.product_id, category_id: product.category_id,
+    source: params.get('source') || 'direct',
+  }, product);
   addToRecentlyViewed(product);
 
   container.innerHTML = `
@@ -502,7 +505,7 @@ export async function renderProductPage(containerId) {
       <a href="#catalog" class="btn btn-sm" style="margin-bottom:1rem">← Quay lại</a>
       <img src="${product.image_url}" alt="${product.brand}" style="width:100%;max-height:360px;object-fit:contain;border-radius:var(--radius)" onerror="this.src='https://via.placeholder.com/600x360.png?text=No+Image'">
       <h2 style="margin:.75rem 0 .25rem">${product.brand} ${product.product_id}</h2>
-      <p style="color:var(--muted);font-size:.85rem">${product.category_id} &middot; ${product.category_code}</p>
+      <p style="color:var(--muted);font-size:.85rem">${escapeHTML(product.category_id)}</p>
       <p style="font-size:1.5rem;font-weight:700;color:var(--primary);margin:.75rem 0">
         $${parseFloat(product.price).toFixed(2)} ${product.currency}
       </p>
@@ -642,94 +645,49 @@ export function renderCartPage(containerId) {
 
 // ── Render: Checkout page ───────────────────────────────────────────────────
 
-export function renderCheckoutPage(containerId) {
+export async function renderCheckoutPage(containerId) {
   const container = document.getElementById(containerId);
-  if (!container) return;
   const items = getCart();
-  const total = cartTotal().toFixed(2);
-
-  if (items.length === 0) {
-    container.innerHTML = '<div class="empty-state"><p>Không có gì để thanh toán.</p><a href="#catalog" class="btn btn-primary">Đi đến danh mục</a></div>';
+  if (!items.length) {
+    container.innerHTML = '<p>Giỏ hàng đang trống.</p><a href="#catalog">Tiếp tục mua sắm</a>';
     return;
   }
-
-  container.innerHTML = `
-    <h2>Thanh toán</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
-      <div class="card">
-        <h3 style="margin-bottom:.75rem">Tóm tắt đơn hàng</h3>
-        ${items.map(item => `
-          <div style="display:flex;justify-content:space-between;padding:.375rem 0;border-bottom:1px solid var(--border)">
-            <span>${item.product_id} &times;${item.quantity}</span>
-            <strong>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</strong>
-          </div>`).join('')}
-        <div style="margin-top:.75rem;font-size:1.1rem;font-weight:700;text-align:right">
-          Tổng cộng: $${total} USD
-        </div>
-      </div>
-      <div class="card">
-        <h3 style="margin-bottom:.75rem">Thông tin thanh toán</h3>
-        <div class="form-group">
-          <label>Số thẻ</label>
-          <input type="text" placeholder="4242 4242 4242 4242" maxlength="19" id="card-number">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-          <div class="form-group">
-            <label>Hạn sử dụng</label>
-            <input type="text" placeholder="MM/YY" maxlength="5" id="card-expiry">
-          </div>
-          <div class="form-group">
-            <label>CVV</label>
-            <input type="text" placeholder="123" maxlength="4" id="card-cvv">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Tên trên thẻ</label>
-          <input type="text" placeholder="Người dùng Demo" id="card-name">
-        </div>
-        <button id="btn-place-order" class="btn btn-primary" style="width:100%;margin-top:.5rem">Đặt hàng</button>
-        <p id="checkout-error" style="color:var(--danger);font-size:.85rem;margin-top:.5rem;display:none"></p>
-      </div>
+  if (!await refreshCustomer()) {
+    localStorage.setItem('cdp_after_login', '#checkout');
+    container.innerHTML = '<h2>Thanh toán</h2><p>Đăng nhập để tạo đơn hàng.</p><a class="btn btn-primary" href="#account">Đăng nhập / Đăng ký</a>';
+    return;
+  }
+  const cartFingerprint = JSON.stringify(items.map(i => [i.product_id, i.quantity]).sort());
+  let pending = JSON.parse(sessionStorage.getItem('cdp_pending_order') || 'null');
+  if (!pending || pending.cart !== cartFingerprint) {
+    pending = { cart: cartFingerprint, key: crypto.randomUUID() };
+    sessionStorage.setItem('cdp_pending_order', JSON.stringify(pending));
+  }
+  container.innerHTML = `<h2>Xác nhận đơn hàng</h2>
+    <div class="card" style="margin-top:1rem">
+      ${items.map(i => `<p>${escapeHTML(i.product_id)} × ${i.quantity}</p>`).join('')}
+      <p>Tạm tính: $${cartTotal().toFixed(2)} USD. Giá cuối cùng được xác nhận khi tạo đơn.</p>
+      <button id="btn-place-order" class="btn btn-primary">Tạo đơn hàng</button>
+      <p id="checkout-error" role="alert" style="color:var(--danger)"></p>
     </div>`;
-
-  document.getElementById('card-number').addEventListener('input', e => {
-    e.target.value = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
-  });
-
   document.getElementById('btn-place-order').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-place-order');
-    btn.disabled = true;
-    btn.textContent = 'Đang xử lý…';
-
-    track('begin_checkout', {
-      cart_id: crypto.randomUUID(),
-      items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity, price: i.price, currency: i.currency })),
-      total_price: total,
-      currency: 'USD',
-    });
-
-    await new Promise(r => setTimeout(r, 800));
-
-    const orderId = 'ORD-' + Math.random().toString(36).slice(2, 9).toUpperCase();
-
-    track('purchase_observed', {
-      cart_id: orderId,
-      items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity, price: i.price, currency: i.currency })),
-      total_price: total,
-      currency: 'USD',
-    });
-
-    container.innerHTML = `
-      <div class="card" style="text-align:center;max-width:500px;margin:2rem auto">
-        <div style="font-size:3rem;margin-bottom:.5rem">✅</div>
-        <h2 style="color:var(--success)">Đơn hàng xác nhận!</h2>
-        <p style="color:var(--muted);margin:.5rem 0">Mã đơn hàng: <strong>${orderId}</strong></p>
-        <p>Tổng thanh toán: <strong>$${total} USD</strong></p>
-        <a href="#dashboard" class="btn btn-primary" style="margin-top:1.5rem">Xem Dashboard</a>
-      </div>`;
-
-    clearCart();
-    updateNavCartBadge();
-    flushEvents();
+    const button = document.getElementById('btn-place-order');
+    button.disabled = true;
+    try {
+      const order = await api('/api/orders', 'POST', {
+        items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })), run_id: getRunId(),
+      }, { 'Idempotency-Key': pending.key });
+      track('begin_checkout', { cart_id: order.order_id, order_id: order.order_id,
+        items: order.items, total_price: order.total_price, currency: order.currency });
+      clearCart(); updateNavCartBadge(); flushEvents();
+      sessionStorage.removeItem('cdp_pending_order');
+      container.innerHTML = `<div class="card"><h2>Đã tạo đơn hàng</h2>
+        <p>Mã đơn: ${escapeHTML(order.order_id)}</p><p>Trạng thái: ${order.status}</p>
+        <p>${escapeHTML(order.total_price)} ${escapeHTML(order.currency)}</p>
+        <a class="btn btn-primary" href="#account">Xem đơn và xác nhận thanh toán mô phỏng</a></div>`;
+    } catch (error) {
+      document.getElementById('checkout-error').textContent = error.message;
+      button.disabled = false;
+    }
   });
 }

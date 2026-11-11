@@ -2,11 +2,12 @@
 # Dependencies for the Demo API and Bot only.
 # Do NOT add to src/pipelines/requirements.txt.
 #
-# The demo API is a read-only layer over Snowplow's PostgreSQL storage backend,
-# so it needs a PostgreSQL driver (psycopg 3.x).
+# Business PostgreSQL API, source journeys and Kafka observer.
 
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 httpx>=0.27.0
 pydantic>=2.0.0
 psycopg[binary]>=3.1.0
+kafka-python==2.3.3
+snowplow-analytics-sdk==0.2.3

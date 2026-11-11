@@ -16,6 +16,7 @@
         Giỏ hàng <span id="cart-badge" style="display:none"></span>
       </a>
       <a href="#dashboard" class="nav-link" data-page="dashboard">Dashboard</a>
+      <a href="#account" class="nav-link" data-page="account">Đăng nhập</a>
     </div>
   </nav>
 
@@ -49,11 +50,12 @@
     <div id="page-dashboard" class="page">
       <div id="dashboard-content"></div>
     </div>
+    <div id="page-account" class="page"><div id="account-content"></div></div>
   </div>
 
   <div id="status-bar"></div>
 
-  <!-- Snowplow Browser Tracker: gửi event thẳng tới Collector (Micro :9090) -->
+  <!-- Snowplow Browser Tracker: gửi event thẳng tới Collector Kafka :9091 -->
   <script src="vendor/snowplow-browser-tracker.min.js"></script>
   <script type="module">
     import {
@@ -63,6 +65,7 @@
     } from './js/catalog.js';
     import { initTracker, trackPageView, trackScrollDepth, trackError } from './js/tracker.js';
     import { renderDashboard, startAutoRefresh, stopAutoRefresh } from './js/dashboard.js';
+    import { renderAccount, refreshCustomer } from './js/account.js';
 
     // Khởi tạo Snowplow tracker trước khi gửi bất kỳ event nào.
     try {
@@ -71,10 +74,11 @@
       console.error('Snowplow tracker init failed:', err);
       showStatus('Không khởi tạo được Snowplow tracker: ' + (err.message || err), true);
     }
-    loadCatalog().catch(err => {
+    await loadCatalog().catch(err => {
       console.error('Catalog load failed:', err);
       showStatus('Tải danh mục thất bại: ' + (err.message || err), true);
     });
+    await refreshCustomer();
     loadCart();
     updateNavCartBadge();
 
@@ -105,6 +109,7 @@
       cart: 'Giỏ hàng',
       checkout: 'Thanh toán',
       dashboard: 'Dashboard',
+      account: 'Tài khoản',
     };
 
     function routePath(hash) {
@@ -137,7 +142,10 @@
         renderCartPage('cart-content');
       } else if (hash.startsWith('#checkout')) {
         document.getElementById('page-checkout').classList.add('active');
-        renderCheckoutPage('checkout-content');
+        await renderCheckoutPage('checkout-content');
+      } else if (hash.startsWith('#account')) {
+        document.getElementById('page-account').classList.add('active');
+        await renderAccount('account-content');
       } else if (hash.startsWith('#dashboard')) {
         document.getElementById('page-dashboard').classList.add('active');
         await renderDashboard();

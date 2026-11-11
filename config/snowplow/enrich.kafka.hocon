@@ -1,0 +1,20 @@
+license.accept = true
+input {
+  topicName = "cdp.web.raw"
+  bootstrapServers = "kafka:9092"
+  consumerConf {
+    "group.id" = "cdp-enrich-v1"
+    "auto.offset.reset" = earliest
+    "enable.auto.commit" = "false"
+    "security.protocol" = PLAINTEXT
+  }
+}
+output {
+  good { topicName = "cdp.web.good", bootstrapServers = "kafka:9092" }
+  bad { topicName = "cdp.web.bad", bootstrapServers = "kafka:9092" }
+  failed { topicName = "cdp.web.failed", bootstrapServers = "kafka:9092" }
+  good.producerConf."security.protocol" = PLAINTEXT
+  bad.producerConf."security.protocol" = PLAINTEXT
+  failed.producerConf."security.protocol" = PLAINTEXT
+}
+telemetry.disable = true

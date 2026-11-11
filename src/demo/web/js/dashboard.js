@@ -2,9 +2,9 @@
  * src/demo/web/js/dashboard.js — CDP Demo Dashboard (đọc từ Snowplow)
  *
  * Nguồn dữ liệu duy nhất là Demo API, và Demo API đọc trực tiếp từ
- * PostgreSQL storage backend của Snowplow:
+ * PostgreSQL observer của Kafka:
  *
- *   Snowplow Collector ──▶ Enrich ──▶ PostgreSQL ──▶ Demo API ──▶ dashboard
+ *   Snowplow Collector ──▶ Kafka ──▶ Enrich ──▶ Kafka ──▶ observer PostgreSQL ──▶ Demo API ──▶ dashboard
  *
  * Features:
  *  - Per-persona funnel view (Lina / Minh / Hoa / Quang)
@@ -15,7 +15,7 @@
  *  - Category distribution (bar chart)
  */
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = `http://${location.hostname}:8000`;
 
 // ── Canvas bar chart helper ─────────────────────────────────────────────────
 
@@ -82,30 +82,16 @@ async function fetchSummary() { return fetchJSON('/api/summary'); }
 //   Hoa (Researcher): search, product_view, scroll_depth
 //   Quang (Cart Abandoner): add_to_cart, cart_abandoned
 
-function derivePersonaStats(counts) {
-  const get = (key) => counts[key] || 0;
-  return {
-    lina: {
-      product_views: get('product_view'),
-      page_views:    get('page_view'),
-      scroll_depth:  get('scroll_depth'),
-    },
-    minh: {
-      product_views:     get('product_view'),
-      add_to_cart:       get('add_to_cart'),
-      begin_checkout:    get('begin_checkout'),
-      purchase_observed: get('purchase_observed'),
-    },
-    hoa: {
-      searches:      get('search'),
-      product_views: get('product_view'),
-      scroll_depth:  get('scroll_depth'),
-    },
-    quang: {
-      add_to_cart:    get('add_to_cart'),
-      cart_abandoned: get('cart_abandoned'),
-    },
+function derivePersonaStats(personas = {}) {
+  const shape = {
+    lina: ['product_views', 'page_views', 'scroll_depth'],
+    minh: ['product_views', 'add_to_cart', 'begin_checkout', 'purchase_observed'],
+    hoa: ['searches', 'product_views', 'scroll_depth'],
+    quang: ['add_to_cart', 'cart_abandoned'],
   };
+  const keys = { product_views: 'product_view', page_views: 'page_view', searches: 'search' };
+  return Object.fromEntries(Object.entries(shape).map(([persona, fields]) => [persona,
+    Object.fromEntries(fields.map(field => [field, (personas[persona] || {})[keys[field] || field] || 0]))]));
 }
 
 // ── Render: stats cards ───────────────────────────────────────────────────────
@@ -166,9 +152,9 @@ function renderPersonaFunnels(personaStats, summary) {
 
   return `
     <div class="card" style="margin-top:1.5rem">
-      <h3 class="section-title">👤 Phễu hành vi theo nhân khẩu học</h3>
+      <h3 class="section-title">👤 Hành vi theo kịch bản bot</h3>
       <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
-        Mỗi persona để lại một "chữ ký" sự kiện đặc trưng trên dashboard.
+        Số sự kiện được nhóm theo persona do bot gửi; thao tác thủ công không gán persona.
       </p>
 
       <div class="persona-grid">
@@ -279,7 +265,7 @@ function renderPersonaFunnels(personaStats, summary) {
       <!-- Minh's conversion funnel bar -->
       ${purchaseCount > 0 || checkoutCount > 0 || cartAdd > 0 ? `
       <div style="margin-top:1rem">
-        <h4 style="font-size:.9rem;margin-bottom:.5rem">Phễu chuyển đổi của Minh (Buyer)</h4>
+        <h4 style="font-size:.9rem;margin-bottom:.5rem">Số sự kiện toàn hệ thống — chưa phải phễu phiên</h4>
         <div style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
           ${[
             { label: 'product_view', count: get('product_view') },
@@ -370,8 +356,8 @@ async function renderDashboard() {
     container.innerHTML = `
       <div class="empty-state">
         <p>⚠️ Không đọc được dữ liệu từ Snowplow.</p>
-        <p>${summary.message || 'Snowplow Micro / PostgreSQL chưa chạy.'}</p>
-        <p>Khởi động bằng: <code>docker compose -f config/docker/compose.snowplow.yml up -d</code></p>
+        <p>${summary.message || 'Bộ quan sát Kafka chưa sẵn sàng.'}</p>
+        <p>Khởi động bằng: <code>.venv/bin/python -m src.demo.sources.runtime up</code></p>
       </div>`;
     return;
   }
@@ -381,12 +367,12 @@ async function renderDashboard() {
   const labels = typeEntries.map(([k]) => k);
   const values = typeEntries.map(([, v]) => v);
 
-  const personaStats = derivePersonaStats(counts);
+  const personaStats = derivePersonaStats(summary.personas);
 
   container.innerHTML = `
     <h2>CDP Demo Dashboard</h2>
     <p style="color:var(--muted);font-size:.85rem">
-      Nguồn: <code>Snowplow PostgreSQL</code> — ${event_count.toLocaleString()} sự kiện trong ${window_hours} giờ gần nhất.
+      Nguồn: <code>Kafka → bộ quan sát</code> — ${event_count.toLocaleString()} sự kiện trong ${window_hours} giờ gần nhất.
       Cập nhật lần cuối: ${new Date().toLocaleTimeString('vi-VN')}
     </p>
 

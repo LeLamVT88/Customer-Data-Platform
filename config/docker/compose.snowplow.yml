@@ -49,7 +49,7 @@ services:
       timeout: 3s
       retries: 30
     ports:
-      # Expose ra host cho Demo API (read layer) và Spark (lakehouse) đọc trực tiếp.
+      # Expose ra host cho chế độ Demo API đọc storage Micro cũ.
       # Chỉ bind loopback để không mở cổng ra mạng ngoài.
       - "127.0.0.1:5432:5432"
     networks:

@@ -104,87 +104,44 @@ Lần chạy đầu cần mạng tới Iglu Central. Sửa schema demo thì rest
 tránh cache cũ. Muốn replay observer: dừng observer cũ, chạy với consumer group
 mới qua `CDP_OBSERVER_GROUP`; chỉ replay được record còn trong retention.
 
-## Lakehouse local
+## Khảo sát REES46 và chuẩn bị Lakehouse chung
 
-REES46 và nguồn Kafka/CDC là hai nhánh riêng; chưa có CDC → Iceberg/Customer 360.
-Job `src/pipelines/snowplow_micro/` cũ chỉ đọc storage Snowplow Micro, không đọc Kafka CDC.
+Lakehouse cũ đã được gỡ ngày 12/11/2026 để xây lại một hệ thống chung cho
+REES46 và nguồn website/Kafka/CDC. Hiện chưa có lệnh khởi chạy Lakehouse mới.
+Không còn các job Spark/Iceberg hoặc batch Bronze/Silver/Gold cũ.
 
-Stack batch được ghim trong [Compose](../config/docker/compose.local-lakehouse.yml),
-[Dockerfile](../config/docker/lakehouse.Dockerfile) và
-[Spark config](../config/spark/lakehouse.conf): Spark 3.5.8, Iceberg 1.11.0,
-Java 17, PostgreSQL 16.10 và SeaweedFS S3 local.
-
-```sh
-.venv/bin/python -m pip install -r src/pipelines/requirements.txt
-.venv/bin/python src/pipelines/inspect_rees46_dataset.py profile --full
-.venv/bin/python src/pipelines/ingest_rees46_batch.py --users 100000
-```
-
-Profiling/adapter phải quét nguồn lớn; không cần chạy lại chỉ để mở dự án.
-Adapter tính checksum và giữ toàn bộ lịch sử trong file của các user được chọn;
-mẫu là các user đầu tiên, có bias. `--all` có code nhưng chưa nghiệm thu toàn
-tháng vào Iceberg. Rerun cùng batch kiểm tra output rồi bỏ qua, không append lặp.
-Không cộng các batch mẫu chồng lặp.
-
-Batch hiện giữ:
-`data/local-batches/rees46/b451baabfcfce093d6fdd117269d3daaff0e55ef435d6c4a84876f3a71c7a168/`.
-Giữ cả `manifest.json`, ba Parquet và `selected-users.json`; không xóa riêng file
-vì manifest dùng checksum để xác minh bộ output.
-
-```sh
-sh src/tools/run_local_lakehouse.sh data/local-batches/rees46/b451baabfcfce093d6fdd117269d3daaff0e55ef435d6c4a84876f3a71c7a168
-# Đo benchmark là một cách chạy cùng job; không chạy đồng thời với lệnh trên.
-.venv/bin/python src/tools/benchmark_lakehouse.py --batch data/local-batches/rees46/b451baabfcfce093d6fdd117269d3daaff0e55ef435d6c4a84876f3a71c7a168
-```
-
-Writer chỉ thay dữ liệu của batch trong từng bảng, yêu cầu một writer; không có
-transaction nhiều bảng. Chờ đối soát PASS trước khi dùng Gold. S3/Iceberg và
-catalog nằm trong Docker volumes; CSV nguồn, batch và reports nằm trên host.
+Các tài nguyên đã xóa: stack Docker `cdp-lakehouse`, hai volume
+`cdp-lakehouse_catalog-data`, `cdp-lakehouse_storage-data`, image riêng
+`cdp-lakehouse-spark:latest`, code/config Lakehouse, batch REES46 và các thư mục
+report Gold/benchmark. Không chạy lệnh prune toàn Docker; volume nguồn Kafka
+và PostgreSQL nghiệp vụ được giữ.
 
 ### Khảo sát REES46 dung lượng lớn
 
 Nguồn local `data/REES46/2019-Oct.csv`: 5.668.612.855 byte, 42.448.764 sự kiện.
-Báo cáo [rees46-full.json](../data/reports/rees46-full.json) có thống kê nguồn;
-distinct trong profiling là ước lượng. Nguồn/ngày tải và điều kiện sử dụng bản
-tải chưa xác minh; checksum local không thay checksum nhà cung cấp.
-
-### Data contract REES46
-
-Namespace, mapping, lỗi/quarantine, identity, giá và funnel được quy định tại
-[mục quy tắc xử lý](project-plan.md#5-quy-tắc-xử-lý).
-Currency và verified customer của REES46 không được suy diễn; timestamp UTC,
-giá decimal(18,2). Event ID theo namespace + checksum file + ordinal nguồn.
-
-### Benchmark
-
-Báo cáo [benchmark-100000.json](../data/reports/lakehouse/benchmark-100000.json)
-ghi nhận 3.551.431 Silver, 0 quarantine, Gold daily/user/session tương ứng
-93/100.000/711.942 dòng, đối soát PASS. Adapter khoảng 90,4 giây, Spark job
-229,7 giây; JVM RSS quan sát khoảng 4,03 GB. Máy có 16 GiB RAM, Spark local[4],
-heap 3g. Phép đo không gồm toàn bộ bộ nhớ catalog/storage và không phải benchmark
-toàn tháng. Biên bản cleanup Iceberg được giữ riêng trong `data/reports/lakehouse/`
-vì ghi nhận batch/snapshot đã xóa và dữ liệu được giữ nguyên.
-
-Gold export đang giữ dưới dạng `*.csv.gz` tại `data/reports/gold/<batch-id>/`.
-Đây là nén lossless, chưa thay đổi nội dung CSV. Đọc trực tiếp bằng DuckDB hoặc
-`gzip -dc path/to/file.csv.gz`. Để tạo lại CSV từ Iceberg:
+Báo cáo [rees46-full.json](../data/reports/rees46-full.json) được giữ vì mô tả
+nguồn CSV, không phải kết quả Lakehouse. Distinct trong profiling là ước lượng.
+Nguồn/ngày tải và điều kiện sử dụng bản tải chưa xác minh.
 
 ```sh
-docker compose -f config/docker/compose.local-lakehouse.yml run --rm spark /workspace/src/pipelines/lakehouse/export_gold.py --batch-id b451baabfcfce093d6fdd117269d3daaff0e55ef435d6c4a84876f3a71c7a168
+.venv/bin/python -m pip install -r src/pipelines/requirements.txt
+.venv/bin/python src/pipelines/inspect_rees46_dataset.py --help
+# Chỉ xuất prefix để xem, không phải mẫu đại diện hoặc đủ lịch sử mỗi user.
+.venv/bin/python src/pipelines/inspect_rees46_dataset.py sample --rows 1000
+# Chỉ chạy nếu cần khảo sát lại toàn file, dùng output mới.
+.venv/bin/python src/pipelines/inspect_rees46_dataset.py profile --full --output data/reports/rees46-full-new.json
 ```
 
-Exporter tạo CSV thường; nếu giữ bản mới, nén và thay bản cũ sau khi đối soát để
-tránh lưu cả hai định dạng trùng nội dung.
+Xem [thiết kế và lộ trình Lakehouse chung](project-plan.md). Dữ liệu REES46
+và website sẽ cùng hạ tầng nhưng giữ namespace và danh tính nguồn độc lập.
 
 ## Cấu hình được giữ
 
 | Đường dẫn trong `config/` | Vai trò |
 | --- | --- |
 | `docker/compose.sources.yml` | Stack Kafka/CDC mặc định |
-| `docker/compose.local-lakehouse.yml`, `docker/lakehouse.Dockerfile` | Stack batch Spark/Iceberg |
 | `docker/compose.snowplow.yml` | Nhánh Micro cũ còn được bot và job demo sử dụng |
 | `business/init.sql`, `kafka/` | Schema nghiệp vụ, topic và connector CDC |
-| `spark/`, `storage/` | Tham số Spark và S3 local |
 | `snowplow/collector.kafka.hocon`, `enrich.kafka.hocon`, `iglu.kafka.json` | Collector/Enrich và resolver HTTP cho Kafka |
 | `snowplow/micro.conf`, `storage.conf`, `iglu.json` | Cấu hình Micro và resolver embedded; khác nhánh Kafka |
 | `snowplow/iglu-client-embedded/schemas/` | Nguồn schema Iglu hiện hành, dùng chung hai nhánh |
@@ -205,11 +162,8 @@ schema, giữ các phiên bản đã phát hành và restart Enrich để nạp 
 ## Kiểm thử
 
 Lệnh unit test và PostgreSQL test nằm trong [README demo](../src/demo/README.md#kiểm-thử).
-Kiểm thử Spark/Iceberg cần Docker:
-
-```sh
-docker compose -f config/docker/compose.local-lakehouse.yml run --rm spark /workspace/src/pipelines/lakehouse/tests/integration.py
-```
+Các kiểm thử Lakehouse cũ đã gỡ cùng implementation; sẽ bổ sung bộ kiểm thử
+cho hai nguồn khi xây Lakehouse chung.
 
 ## Cache và môi trường Python
 
@@ -227,12 +181,10 @@ python3 -m venv .venv
 | Nội dung | Chính sách |
 | --- | --- |
 | CSV REES46 gốc | Giữ để replay và truy vết |
-| Bộ batch 100.000 user | Giữ nguyên manifest/checksum và toàn bộ output |
-| Profiling, benchmark, cleanup Iceberg | Giữ bằng chứng số liệu và thay đổi dữ liệu |
-| Gold export | Giữ bản nén, tránh bản CSV thường trùng nội dung |
+| Profiling REES46 | Giữ báo cáo khảo sát nguồn CSV |
 | Source acceptance | Giữ một run PASS đầy đủ nhất, gồm ground truth và bad row |
 | Run lỗi, run bị thay thế, bot metadata, thư mục rỗng, `.DS_Store` | Có thể dọn sau khi xác nhận không còn được tham chiếu |
-| Sơ đồ kiến trúc | Giữ DOT nguồn và SVG hiển thị; không giữ thêm PNG trùng |
+| Sơ đồ kiến trúc | Giữ PNG để xem/chèn báo cáo; Mermaid trong project-plan.md mô tả thiết kế mới |
 
 `data/` bị Git ignore: các liên kết tới artifact local chỉ có trên máy giữ dữ
 liệu; máy khác cần có nguồn REES46 hoặc chạy verifier để tạo bằng chứng mới.

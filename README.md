@@ -1,7 +1,8 @@
 # Customer Data Platform
 
-Dự án local gồm hai nhánh: batch REES46 → Iceberg Bronze/Silver/Gold và nguồn
-website/hành vi/nghiệp vụ → Snowplow/Kafka + PostgreSQL/Debezium.
+Dự án chuẩn bị hai nguồn cho một Lakehouse chung: dữ liệu lịch sử REES46 và
+website demo (hành vi Snowplow/Kafka cùng nghiệp vụ PostgreSQL/Debezium).
+Lakehouse REES46 cũ đã được gỡ ngày 12/11/2026; Lakehouse chung chưa triển khai.
 
 - [Kiến trúc và tiến độ](docs/project-plan.md)
 - [Vận hành, kiểm thử và dữ liệu kiểm chứng](docs/operations.md)
@@ -12,8 +13,7 @@ Cấu trúc mã nguồn:
 | Thư mục | Nội dung |
 | --- | --- |
 | `src/demo/` | Website, API, nguồn Kafka/CDC, bot tracking và catalog seed chung |
-| `src/pipelines/` | Pipeline REES46 và job Micro cũ trong `snowplow_micro/` |
-| `src/tools/` | Script vận hành và benchmark Lakehouse |
+| `src/pipelines/` | Công cụ khảo sát CSV REES46; chưa có pipeline Lakehouse |
 
 Khởi chạy nguồn demo từ root, sau khi cài Docker và Python dependencies:
 

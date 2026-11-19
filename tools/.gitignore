@@ -1,0 +1,7 @@
+# Downloaded binaries are not tracked; see docs/lakehouse-deployment.md
+# for the download commands.
+bin/
+jars/
+hadoop/bin/*.exe
+hadoop/bin/*.dll
+hadoop/bin/*.cmd

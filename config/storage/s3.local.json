@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "cdp-local",
+      "credentials": [
+        {
+          "accessKey": "cdp-local",
+          "secretKey": "cdp-local-storage"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

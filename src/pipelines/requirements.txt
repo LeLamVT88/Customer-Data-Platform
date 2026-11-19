@@ -1,1 +1,3 @@
+# PySpark and DuckDB are needed by the lakehouse pipelines.
+pyspark==3.5.8
 duckdb==1.5.6

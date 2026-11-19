@@ -1,157 +1,142 @@
 # Triển khai Lakehouse chung (Apache Iceberg)
 
-Hướng dẫn dựng Lakehouse chung cho REES46 + Website nguồn theo
-[contract](lakehouse-contract.md). Tài liệu này chỉ dạy **cách triển khai**;
-thiết kế dữ liệu nằm ở contract.
+Hướng dẫn dựng và vận hành Lakehouse chung cho REES46 + Website nguồn theo
+[contract](lakehouse-contract.md).
 
-> **Trạng thái:** chưa triển khai. Stack cũ (`cdp-lakehouse`) đã bị gỡ ngày
-> 12/11/2026 cùng code Spark/Iceberg, batch REES46 và benchmark. Tài liệu này
-> dựng lại từ đầu, dựa trên bản cũ đã chạy thật.
+> **Trạng thái:** stack đã dựng và kiểm chứng trên máy Windows local.
+> 23/23 kiểm tra trong `verify_lakehouse.py` đạt. Còn thiếu: job Kafka/CDC
+> (cần stack nguồn), tầng Silver và Gold.
 
 ---
 
-## 0. Kiến trúc stack
+## 0. Vì sao không dùng Docker
+
+Bản hướng dẫn đầu tiên dựa trên Docker Compose. Trên máy này **WSL2 không
+hoạt động** (`HCS_E_SERVICE_NOT_AVAILABLE`), nên Docker Desktop không khởi
+động được, và việc bật `VirtualMachinePlatform` cần quyền administrator.
+
+Vì vậy stack chạy dưới dạng **tiến trình Windows native**:
+
+| Thành phần | Docker (phương án A) | Native (phương án B — đang dùng) |
+|---|---|---|
+| Catalog | `postgres:16` | PostgreSQL 18 đã cài, cluster riêng port 15434 |
+| Storage | `minio/minio` | `tools/bin/minio.exe` port 9000 |
+| Compute | `apache/spark:3.5.8` | PySpark 3.5.8 trong `.venv` |
+| Quản lý | `docker compose up` | `scripts/lakehouse.ps1 start` |
+
+Phương án B không cần đổi một dòng nào trong DDL hay trong code ingestion —
+chỉ khác cách khởi động và các biến môi trường.
+
+---
+
+## 1. Kiến trúc stack
 
 ```text
-                    ┌──────────────────┐
-                    │  catalog         │  PostgreSQL 16
-                    │  (JDBC catalog)  │  ← metadata Iceberg (vài KB)
-                    │  :5432           │
-                    └────────┬─────────┘
-                             │ đọc/ghi metadata
-                    ┌────────▼─────────┐
-                    │  spark           │  Spark 3.5.8 + Iceberg 1.11
-                    │  (job PySpark)   │  Java 17
-                    └────────┬─────────┘
-                             │ đọc/ghi file Parquet
-                    ┌────────▼─────────┐
-                    │  storage         │  MinIO (S3-compatible)
-                    │  :9000           │  ← dữ liệu thật
-                    └──────────────────┘
+                    ┌──────────────────────────────┐
+                    │  catalog                     │
+                    │  PostgreSQL 18  :15434       │
+                    │  db=iceberg user=cdp         │
+                    │  ← metadata Iceberg (vài KB) │
+                    └──────────┬───────────────────┘
+                               │ đọc/ghi metadata
+                    ┌──────────▼───────────────────┐
+                    │  spark (pyspark 3.5.8)       │
+                    │  Iceberg 1.11 + Java 17      │
+                    └──────────┬───────────────────┘
+                               │ đọc/ghi file Parquet
+                    ┌──────────▼───────────────────┐
+                    │  storage (MinIO)  :9000      │
+                    │  s3://cdp/warehouse/          │
+                    │  ← dữ liệu thật              │
+                    └──────────────────────────────┘
 ```
 
 **Điểm cần nhớ:** catalog ≠ dữ liệu.
+
 - `catalog` (PostgreSQL) chỉ chứa *metadata*: schema, partition spec, snapshot, manifest.
-- `storage` (MinIO) chứa *file dữ liệu* Parquet.
+  Bảng `iceberg_tables` và `iceberg_namespace_properties`.
+- `storage` (MinIO) chứa *file dữ liệu* Parquet + `metadata.json` + `.avro` manifest.
 - Mất catalog → mất schema nhưng **không** mất dữ liệu thô.
 
-**Tại sao chọn JDBC catalog thay vì REST catalog:** local 1 engine, đơn giản
-nhất, không cần thêm service. Khi lên multi-engine thì chuyển sang REST
-catalog (Polaris/Lakekeeper) — chỉ đổi 3 dòng config, dữ liệu không đổi.
-
-**Tại sao chọn MinIO thay vì SeaweedFS:** bản cũ dùng SeaweedFS, chạy được
-nhưng cấu hình S3 phức tạp và ít tài liệu. MinIO là lựa chọn mặc định phổ
-biến, cũng chính là `minio/minio` mà nhiều tài liệu Iceberg dùng.
+**Tại sao JDBC catalog:** local 1 engine, đơn giản nhất, không thêm service.
+Khi lên multi-engine thì chuyển sang REST catalog — chỉ đổi 3 dòng config.
 
 ---
 
 ## Bước 1 — Chuẩn bị môi trường
 
-### 1.1 Bật Docker Desktop
+Kiểm tra nhanh:
 
 ```powershell
-Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+.\scripts\lakehouse.ps1 status
 ```
 
-Đợi đến khi `docker version` trả về server version (không phải lỗi):
+Yêu cầu tối thiểu đã được kiểm tra trên máy này:
 
-```powershell
-docker version --format "{{.Server.Version}}"
-```
+| Tài nguyên | Cần | Máy này |
+|---|---|---|
+| Disk trống | 20 GB | 150 GB ✅ |
+| RAM | 8 GB | 15.2 GB ✅ |
+| CPU | 4 core | 12 logical ✅ |
+| JDK | 17 | `C:\Program Files\Java\jdk-17` ✅ |
+| Python | 3.10+ | 3.13.7 qua `py -3.13` ✅ |
 
-> **Hiện tại Docker Desktop chưa chạy.** Đây là điều kiện tiên quyết cho
-> toàn bộ các bước sau.
-
-### 1.2 Kiểm tra tài nguyên
-
-```powershell
-Get-PSDrive C | Select-Object @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
-```
-
-| Tài nguyên | Tối thiểu | Khuyến nghị | Ghi chú |
-|---|---|---|---|
-| Disk trống | 20 GB | **40 GB+** | REES46 CSV 5,6 GB + bản Parquet ~2-3 GB + Spark overhead |
-| RAM | 8 GB | 12 GB+ | Spark driver 3 GB + JVM + Postgres + MinIO |
-| Docker Desktop RAM | 6 GB | 8 GB | Settings → Resources |
-
-> Máy hiện có: **150 GB trống**, **15,2 GB RAM** → đủ.
-
-### 1.3 Python
-
-Contract yêu cầu Python 3.11+:
-
-```powershell
-py -3.13 --version
-python3 --version
-```
-
-`.venv` hiện tại là **Python 3.10.0** — có thể giữ, nhưng nếu gặp lỗi type
-hinting hoặc `Self` thì nên tạo lại venv bằng 3.13:
-
-```powershell
-Remove-Item -Recurse -Force .venv
-py -3.13 -m venv .venv
-.venv\Scripts\python.exe -m pip install --upgrade pip
-.venv\Scripts\python.exe -m pip install -r src/demo/requirements.txt -r src/pipelines/requirements.txt
-```
+> **JDK 21 mặc định của máy không dùng được với Spark 3.5.** Script launcher
+> tự trỏ `JAVA_HOME` về JDK 17.
 
 ---
 
-## Bước 2 — Tạo cấu hình S3 cho storage
+## Bước 2 — Khởi động stack
 
-Tạo file `config/storage/s3.local.json` — định nghĩa identity và credentials
-mà Iceberg/AWS SDK sẽ dùng:
-
-```json
-{
-  "identities": [
-    {
-      "name": "cdp-local",
-      "credentials": [
-        {"accessKey": "cdp-local", "secretKey": "cdp-local-storage"}
-      ],
-      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
-    }
-  ]
-}
+```powershell
+.\scripts\lakehouse.ps1 start
 ```
 
-> MinIO mặc định không cần file này (dùng `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`).
-> File này dùng khi chuyển sang SeaweedFS, hoặc khi cần tool S3 CLI riêng.
-> Có thể bỏ qua nếu dùng MinIO.
+Lần đầu tiên script sẽ:
+
+1. `initdb` tạo cluster PostgreSQL mới ở `%LOCALAPPDATA%\cdp-iceberg-catalog`,
+   ghi `port = 15434` và `listen_addresses = '127.0.0.1'` vào `postgresql.conf`.
+2. Khởi động MinIO với `MINIO_ROOT_USER=cdp-local`,
+   `MINIO_ROOT_PASSWORD=cdp-local-storage`, dữ liệu ở `data/minio`.
+3. Tạo bucket `cdp` trong MinIO.
+
+Các lệnh khác:
+
+```powershell
+.\scripts\lakehouse.ps1 status    # xem trạng thái
+.\scripts\lakehouse.ps1 stop      # dừng (giữ dữ liệu)
+.\scripts\lakehouse.ps1 restart   # dừng rồi bật lại
+.\scripts\lakehouse.ps1 reset     # XOÁ sạch dữ liệu, dựng lại từ đầu
+```
 
 ---
 
 ## Bước 3 — Cấu hình Spark cho Iceberg
 
-Tạo `config/spark/lakehouse.conf`. Đây là file quan trọng nhất — nó định nghĩa
-3 khái niệm hay bị nhầm:
+File `config/spark/lakehouse.conf` — định nghĩa 3 khái niệm hay bị nhầm:
 
 ```properties
-# Bật extension Iceberg cho Spark: MERGE INTO, add_files, rewrite_data_files.
 spark.sql.extensions org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
 
-# ── Catalog ───────────────────────────────────────────────────────────────────
 spark.sql.catalog.cdp org.apache.iceberg.spark.SparkCatalog
 spark.sql.catalog.cdp.catalog-impl org.apache.iceberg.jdbc.JdbcCatalog
-spark.sql.catalog.cdp.uri jdbc:postgresql://catalog:5432/iceberg
+spark.sql.catalog.cdp.uri jdbc:postgresql://127.0.0.1:15434/iceberg
 spark.sql.catalog.cdp.jdbc.user cdp
 spark.sql.catalog.cdp.jdbc.password cdp-local-catalog
 spark.sql.catalog.cdp.warehouse s3://cdp/warehouse
 
-# ── Object storage ────────────────────────────────────────────────────────────
 spark.sql.catalog.cdp.io-impl org.apache.iceberg.aws.s3.S3FileIO
-spark.sql.catalog.cdp.s3.endpoint http://storage:9000
+spark.sql.catalog.cdp.s3.endpoint http://127.0.0.1:9000
 spark.sql.catalog.cdp.s3.path-style-access true
 spark.sql.catalog.cdp.s3.chunked-encoding-enabled false
+spark.sql.catalog.cdp.s3.access-key-id cdp-local
+spark.sql.catalog.cdp.s3.secret-access-key cdp-local-storage
+spark.sql.catalog.cdp.s3.region us-east-1
 
-# ── Behaviour ─────────────────────────────────────────────────────────────────
 spark.sql.session.timeZone UTC
-spark.sql.ansi.enabled true
-spark.sql.shuffle.partitions 32
+spark.sql.shuffle.partitions 16
 spark.sql.adaptive.enabled true
-spark.sql.ui.enabled false
-spark.local.dir /workspace/data/spark-temp
+spark.local.dir data/spark-temp
 ```
 
 **Giải thích từng dòng quan trọng:**
@@ -162,42 +147,20 @@ spark.local.dir /workspace/data/spark-temp
 | `spark.sql.catalog.cdp` | **Tên catalog** dùng trong SQL (`cdp.bronze.xxx`) | SQL phải viết `spark_catalog.bronze.xxx` |
 | `catalog-impl` | Loại catalog thật | `ClassNotFoundException` |
 | `uri` | JDBC URL tới PostgreSQL catalog | `Connection refused` tới catalog |
-| `warehouse` | Bucket + prefix chứa file Parquet | `NoSuchBucketException` / ghi sai chỗ |
+| `warehouse` | Bucket + prefix chứa file Parquet | `NoSuchBucketException` |
 | `io-impl` | Bộ đọc/ghi file S3 | `ClassNotFoundException: S3FileIO` |
 | `s3.endpoint` | Endpoint của MinIO | Iceberg cố gọi AWS thật → `UnknownHostException` |
-| `path-style-access` | `s3://bucket/key` thay vì `s3://bucket.s3.amazonaws.com/key` | `The specified bucket does not exist` |
-| `chunked-encoding-enabled false` | Tắt chunked transfer | `SignatureDoesNotMatch` với S3 server cũ |
-| `spark.session.timeZone UTC` | Múi giờ | Lệch ngày giữa Bronze và Gold |
-| `spark.local.dir` | Nơi ghi spill/temp | Đầy đĩa container |
+| `s3.path-style-access` | `s3://bucket/key` thay vì `s3://bucket.s3.amazonaws.com/key` | `The specified bucket does not exist` |
+| `chunked-encoding-enabled false` | Tắt chunked transfer | `SignatureDoesNotMatch` |
+| `s3.access-key-id` / `secret-access-key` | Credentials cho MinIO | `AccessDenied` |
+| `session.timeZone UTC` | Múi giờ | Lệch ngày giữa Bronze và Gold |
+| `spark.local.dir` | Nơi ghi spill/temp | Đầy đĩa |
 
 ---
 
-## Bước 4 — Tạo Dockerfile cho Spark
+## Bước 4 — Jars Iceberg
 
-Tạo `config/docker/lakehouse.Dockerfile`:
-
-```dockerfile
-# Spark 3.5.x base image đi kèm Java 11, nhưng Iceberg 1.11 yêu cầu Java 17.
-FROM eclipse-temurin:17.0.18_8-jre-jammy AS java_runtime
-
-FROM apache/spark:3.5.8
-USER root
-COPY --from=java_runtime /opt/java/openjdk /opt/java/openjdk
-ENV JAVA_HOME=/opt/java/openjdk
-
-# DuckDB để đọc CSV REES46 theo kiểu streaming (không load vào RAM).
-RUN pip3 install --no-cache-dir duckdb==1.5.6
-
-# Iceberg runtime + AWS bundle + JDBC driver cho PostgreSQL catalog.
-ADD https://repo.maven.apache.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.11.0/iceberg-spark-runtime-3.5_2.12-1.11.0.jar /opt/spark/jars/
-ADD https://repo.maven.apache.org/maven2/org/apache/iceberg/iceberg-aws-bundle/1.11.0/iceberg-aws-bundle-1.11.0.jar /opt/spark/jars/
-ADD https://repo.maven.apache.org/maven2/org/postgresql/postgresql/42.7.8/postgresql-42.7.8.jar /opt/spark/jars/
-RUN chmod 644 /opt/spark/jars/*.jar
-
-WORKDIR /workspace
-```
-
-**Ba jar cần thiết và lý do:**
+Ba jar bắt buộc nằm ở `tools/jars/`:
 
 | Jar | Bắt buộc vì |
 |---|---|
@@ -205,213 +168,59 @@ WORKDIR /workspace
 | `iceberg-aws-bundle` | `S3FileIO` — đọc/ghi file trên MinIO |
 | `postgresql` | JDBC driver để `JdbcCatalog` nói chuyện với PostgreSQL |
 
-> **Sai lầm thường gặp:** dùng `iceberg-spark-runtime-3.5_2.12` với Spark
-> build Scala 2.13 → `NoClassDefFoundError`. Kiểm tra bằng:
-> ```powershell
-> docker run --rm apache/spark:3.5.8 spark-submit --version
-> ```
-> Nếu in `spark-submit` với `Scala version: 2.12.x` thì đúng.
-
-**Cách build:**
 ```powershell
-docker build -f config/docker/lakehouse.Dockerfile -t cdp-lakehouse-spark:latest .
-```
-
----
-
-## Bước 5 — Tạo Compose file
-
-Tạo `config/docker/compose.lakehouse.yml`:
-
-```yaml
-name: cdp-lakehouse
-
-services:
-  # ── Catalog: lưu metadata Iceberg (schema, snapshot, manifest) ─────────────
-  catalog:
-    image: postgres:16.10-bookworm
-    environment:
-      POSTGRES_DB: iceberg
-      POSTGRES_USER: cdp
-      POSTGRES_PASSWORD: cdp-local-catalog
-    volumes:
-      - catalog-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cdp -d iceberg"]
-      interval: 3s
-      timeout: 5s
-      retries: 30
-
-  # ── Storage: object storage S3-compatible, chứa file Parquet ───────────────
-  storage:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: cdp-local
-      MINIO_ROOT_PASSWORD: cdp-local-storage
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
-    volumes:
-      - storage-data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "mc ready local || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-
-  # ── Spark: chạy job ingestion ─────────────────────────────────────────────
-  spark:
-    build:
-      context: ../..
-      dockerfile: config/docker/lakehouse.Dockerfile
-    image: cdp-lakehouse-spark:latest
-    user: "0:0"
-    entrypoint:
-      ["/opt/spark/bin/spark-submit", "--master", "local[4]",
-       "--driver-memory", "3g",
-       "--properties-file", "/workspace/config/spark/lakehouse.conf"]
-    environment:
-      AWS_ACCESS_KEY_ID: cdp-local
-      AWS_SECRET_ACCESS_KEY: cdp-local-storage
-      AWS_REGION: us-east-1
-      # Tương thích S3 server local: bỏ checksum trailer tuỳ chọn.
-      AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
-      AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
-      SPARK_LOCAL_IP: 127.0.0.1
-      PYSPARK_PYTHON: python3
-    volumes:
-      - ../../src:/workspace/src:ro
-      - ../../config/spark:/workspace/config/spark:ro
-      - ../../data:/workspace/data
-    depends_on:
-      catalog:
-        condition: service_healthy
-      storage:
-        condition: service_healthy
-    networks:
-      - default
-      # Đọc thẳng PostgreSQL business (đã đổi sang :15433) của stack nguồn.
-      - cdp-sources-net
-
-networks:
-  cdp-sources-net:
-    external: true
-    name: cdp-sources_default
-
-volumes:
-  catalog-data:
-  storage-data:
-```
-
-**Những điểm cần chú ý:**
-
-| Điểm | Giải thích |
-|---|---|
-| `network cdp-sources-net` external | Spark cần đọc PostgreSQL business (CDC) và Kafka. Network phải được tạo **trước** bởi stack nguồn |
-| `user: "0:0"` | Spark ghi vào volume `data/` cần quyền ghi |
-| `../../src:/workspace/src:ro` | Job nằm trong `src/pipelines/`. Mount read-only để không sửa code từ container |
-| `../../data:/workspace/data` | Cần **ghi** (Spark temp, file output). Không mount `:ro` |
-| `SPARK_LOCAL_IP` | Bắt buộc khi chạy `local[*]` trong container, tránh lỗi hostname resolve |
-| `driver-memory 3g` | Spark driver JVM. Đủ cho xử lý 42 triệu dòng theo chunk |
-| `master local[4]` | 4 thread trong container. Tăng lên 8 nếu CPU mạnh |
-
-**Thứ tự khởi động quan trọng:**
-```powershell
-# 1. Stack nguồn trước (tạo network + Kafka + Postgres business)
-.venv\Scripts\python.exe -m src.demo.sources.runtime up
-
-# 2. Lakehouse sau (cần network của stack nguồn)
-docker compose -f config/docker/compose.lakehouse.yml up -d --wait --wait-timeout 180
-```
-
----
-
-## Bước 6 — Tạo bucket S3
-
-MinIO tạo bucket tự động ở lần đầu truy cập, nhưng làm thủ công để chắc chắn:
-
-```powershell
-docker compose -f config/docker/compose.lakehouse.yml exec storage `
-  mc alias set local http://localhost:9000 cdp-local cdp-local-storage
-docker compose -f config/docker/compose.lakehouse.yml exec storage `
-  mc mb local/cdp
-docker compose -f config/docker/compose.lakehouse.yml exec storage `
-  mc ls local/
-```
-
-> Iceberg tự tạo "folder" con (`s3://cdp/warehouse/cdp.bronze.xxx/`) khi ghi lần
-> đầu — không cần tạo trước.
-
----
-
-## Bước 7 — Tạo bảng Bronze
-
-### 7.1 Tạo file DDL
-
-`src/pipelines/lakehouse/sql/01_bronze.sql`:
-
-```sql
--- cdp.bronze.rees46_events — event từ CSV REES46, chưa diễn giải.
-CREATE TABLE IF NOT EXISTS cdp.bronze.rees46_events (
-    -- Nội dung nguồn (giữ nguyên, không diễn giải ở tầng Bronze)
-    event_time        TIMESTAMP,
-    event_type        STRING    NOT NULL,
-    product_id        STRING,
-    category_id       STRING,
-    category_code     STRING,
-    brand             STRING,
-    price_raw         STRING,              -- giữ chuỗi gốc
-    price             DECIMAL(18, 2),      -- parse từ price_raw, lỗi → NULL
-    currency          STRING,              -- LUÔN NULL: REES46 không có currency
-    user_id           STRING,              -- namespace REES46, không ghép với web
-    user_session      STRING,
-
-    -- Metadata truy vết
-    source_system         STRING    NOT NULL,   -- 'rees46'
-    source_file           STRING    NOT NULL,
-    source_file_checksum  STRING    NOT NULL,   -- sha256 file gốc
-    source_row_number     BIGINT    NOT NULL,   -- 1-based, không tính header
-    ingested_at           TIMESTAMP NOT NULL,
-    batch_id              STRING    NOT NULL
+$jars = "tools\jars"
+$urls = @(
+  "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.11.0/iceberg-spark-runtime-3.5_2.12-1.11.0.jar",
+  "https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-aws-bundle/1.11.0/iceberg-aws-bundle-1.11.0.jar",
+  "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.8/postgresql-42.7.8.jar"
 )
-USING iceberg
-PARTITIONED BY (days(event_date))
-LOCATION 's3://cdp/warehouse/cdp.bronze.rees46_events'
-TBLPROPERTIES ('format-version' = '2');
+foreach ($u in $urls) { curl.exe -sL -o "$jars\$(Split-Path $u -Leaf)" "$u" }
 ```
 
-> **Lưu ý:** `event_date` không có trong danh sách cột ở trên nhưng lại dùng
-> trong `PARTITIONED BY`. Phải thêm cột `event_date DATE NOT NULL` vào danh
-> sách cột. Iceberg yêu cầu cột partition phải tồn tại trong schema.
->
-> Hoặc bỏ `PARTITIONED BY` và dùng `ALTER TABLE ... ADD PARTITION FIELD`
-> sau khi tạo bảng — cách này an toàn hơn vì không bỏ sót cột.
+> **Sai lầm thường gặp:** dùng `iceberg-spark-runtime-3.5_2.13` (Scala 2.13)
+> với Spark build Scala 2.12 → `NoClassDefFoundError`. Kiểm tra:
+> ```powershell
+> .venv\Scripts\python.exe -c "import pyspark,os;print(os.listdir(os.path.join(os.path.dirname(pyspark.__file__),'jars'))[:3])"
+> ```
 
-### 7.2 Áp dụng DDL
-
-```powershell
-docker compose -f config/docker/compose.lakehouse.yml exec spark `
-  /opt/spark/bin/spark-sql --master "local[2]" `
-  --properties-file /workspace/config/spark/lakehouse.conf `
-  -f /workspace/src/pipelines/lakehouse/sql/01_bronze.sql
-```
-
-**Kiểm tra kết quả:**
-```powershell
-docker compose -f config/docker/compose.lakehouse.yml exec spark `
-  /opt/spark/bin/spark-sql --master "local[2]" `
-  --properties-file /workspace/config/spark/lakehouse.conf `
-  -e "SHOW NAMESPACES IN cdp; SHOW TABLES IN cdp.bronze;"
-```
+**Jars được copy tự động** vào `pyspark/jars/` bởi `session.install_jars()`.
+Không dùng `spark.jars` vì nó copy jar vào thư mục temp của session, rồi
+Windows không xoá được thư mục đó (JVM vẫn giữ file handle).
 
 ---
 
-## Bước 8 — Job ingestion đầu tiên (REES46)
+## Bước 5 — Tạo bảng Bronze
 
-### 8.1 Nguyên tắc bắt buộc
+File DDL: `src/pipelines/lakehouse/sql/01_bronze.sql`. Chạy:
 
-REES46 là 5,6 GB / 42,4 triệu dòng. **Không được** load vào RAM.
+```powershell
+.\scripts\run-job.ps1 src\pipelines\lakehouse\apply_ddl.py
+```
+
+Tạo 3 namespace (`bronze`, `silver`, `gold`) và 4 bảng:
+
+| Bảng | Nguồn | Khoá chống lặp |
+|---|---|---|
+| `cdp.bronze.rees46_events` | CSV REES46 | `(source_file_checksum, source_row_number)` |
+| `cdp.bronze.web_events` | Kafka `cdp.web.good` | `(kafka_topic, kafka_partition, kafka_offset)` |
+| `cdp.bronze.web_events_failed` | Kafka `cdp.web.bad` / `.failed` | `(kafka_topic, kafka_partition, kafka_offset)` |
+| `cdp.bronze.business_cdc` | Kafka `cdp.business.public.*` | `(kafka_topic, kafka_partition, kafka_offset)` |
+
+Tất cả dùng `format-version = '2'`, partition `days(event_date)`,
+compression `zstd`.
+
+> **Cột partition phải tồn tại trong schema.** Iceberg sẽ báo lỗi nếu
+> `PARTITIONED BY (days(event_date))` mà bảng không có cột `event_date`.
+> Đây là lý do `event_date DATE NOT NULL` có mặt trong mọi bảng Bronze.
+
+---
+
+## Bước 6 — Job ingestion REES46
+
+### 6.1 Nguyên tắc bắt buộc
+
+REES46 thật là 5,6 GB / 42,4 triệu dòng. **Không được** load vào RAM.
 
 ```python
 # SAI — sẽ OOM
@@ -422,115 +231,117 @@ df = pd.read_csv("data/REES46/2019-Oct.csv")
 import duckdb
 db = duckdb.connect()
 db.execute("SET memory_limit = '512MB'")
-db.execute("SET temp_directory = '/workspace/data/duckdb-temp'")
-db.execute("""
-    CREATE VIEW source AS SELECT * FROM read_csv(
-        'data/REES46/2019-Oct.csv', header=true, all_varchar=true, nullstr='',
-        sample_size=20480, ignore_errors=false)
-""")
+db.execute("SET temp_directory = '.../duckdb-temp'")
+db.execute("CREATE VIEW source AS SELECT * FROM read_csv('...', header=true, all_varchar=true)")
 ```
 
-Pattern này đã có sẵn trong `src/pipelines/inspect_rees46_dataset.py` — tái sử dụng.
-
-### 8.2 Cấu trúc job
-
-`src/pipelines/lakehouse/ingest_rees46.py`:
-
-```python
-from pyspark.sql import SparkSession, functions as F
-from pyspark.sql.types import (StringType, TimestampType, DecimalType,
-                                DateType, LongType)
-
-spark = SparkSession.builder.appName("ingest-rees46").getOrCreate()
-
-BATCH_ID = "rees46-2019-10-v1"
-
-# 1) Đọc CSV bằng DuckDB, chỉ lấy tập cột cần, ép kiểu ngay.
-source = spark.read.format("csv") \
-    .option("header", "true") \
-    .option("inferSchema", "false") \
-    .option("mode", "PERMISSIVE") \
-    .schema(RAW_SCHEMA) \
-    .csv("data/REES46/2019-Oct.csv") \
-    .withColumn("source_file", F.lit("data/REES46/2019-Oct.csv")) \
-    .withColumn("source_file_checksum", F.lit(FILE_CHECKSUM)) \
-    .withColumn("batch_id", F.lit(BATCH_ID)) \
-    .withColumn("ingested_at", F.current_timestamp())
-
-# 2) Chuẩn hoá nhẹ + tạo cột partition.
-target = source \
-    .withColumn("event_time", F.col("event_time").cast(TimestampType())) \
-    .withColumn("event_date", F.to_date("event_time")) \
-    .withColumn("price", F.col("price_raw").cast(DecimalType(18, 2))) \
-    .withColumn("currency", F.lit(None).cast(StringType())) \
-    .withColumn("source_system", F.lit("rees46")) \
-    .withColumn("source_row_number", F.monotonically_increasing_id() + 1)
-
-# 3) Ghi idempotent: chỉ thay batch này.
-target.writeTo("cdp.bronze.rees46_events") \
-    .overwrite(F.col("batch_id") == F.lit(BATCH_ID))
-```
-
-**Điểm then chốt của đoạn `overwrite`:**
-```python
-.overwrite(F.col("batch_id") == F.lit(BATCH_ID))
-```
-→ Ghi đè **chỉ** dòng có `batch_id = BATCH_ID`. Các batch khác không bị đụng.
-Job chạy lại cùng batch → an toàn. Đây là ứng dụng cốt lõi của Iceberg.
-
-### 8.3 Chạy
+### 6.2 Chạy job
 
 ```powershell
-docker compose -f config/docker/compose.lakehouse.yml run --rm spark `
-  /workspace/src/pipelines/lakehouse/ingest_rees46.py --batch-id rees46-2019-10-v1
+.\scripts\run-job.ps1 src\pipelines\lakehouse\ingest_rees46.py `
+  --source data\REES46\2019-Oct.csv `
+  --batch-id rees46-2019-10-v1
 ```
 
-### 8.4 Kiểm chứng
+Job thực hiện:
+1. Tính `sha256` file gốc → `source_file_checksum`.
+2. DuckDB stream CSV → Parquet staging (ZSTD).
+3. Spark đọc staging, ép kiểu, ghi vào Iceberg.
+4. Đối soát số dòng.
+
+### 6.3 Điểm then chốt: `overwrite` theo batch
+
+```python
+raw.writeTo("cdp.bronze.rees46_events") \
+    .overwrite(F.col("batch_id") == F.lit(batch_id))
+```
+
+Ghi đè **chỉ** dòng có `batch_id` tương ứng. Các batch khác không bị đụng.
+Job chạy lại cùng batch → an toàn. Đây là ứng dụng cốt lõi của Iceberg.
+
+**Đã kiểm chứng:** chạy job 2 lần liên tiếp → bảng vẫn có 20.000 dòng
+(không phải 40.000).
+
+### 6.4 Xử lý giá trị lỗi
+
+```python
+.withColumn("price", F.expr("try_cast(price as decimal(18,2))"))
+```
+
+Dùng `try_cast`, không dùng `cast`. Với `cast`, một giá trị `"n/a"` làm hỏng
+cả batch:
+
+```
+SparkNumberFormatException: [CAST_INVALID_INPUT] The value 'n/a' ...
+```
+
+Với `try_cast`, giá trị lỗi thành `NULL` và được đánh dấu qua
+`quality_flags` ở tầng Silver (contract §5.1).
+
+### 6.5 Dataset mẫu
+
+Dataset REES46 thật không được phân phối kèm repo. Bộ mẫu cùng schema:
+
+```powershell
+.venv\Scripts\python.exe src\pipelines\lakehouse\make_sample_rees46.py --rows 20000
+.\scripts\run-job.ps1 src\pipelines\lakehouse\ingest_rees46.py `
+  --source data\REES46\sample.csv --batch-id rees46-sample-v1
+```
+
+Bộ mẫu cố ý chứa giá trị `price` sai định dạng (`n/a`) và âm (`-5.00`)
+để kích hoạt cờ chất lượng và cảnh báo tỉ lệ null.
+
+> **Không được** cộng dồn các bản sample thành dữ liệu "toàn tháng"
+> (contract §4). Mỗi lần chạy = 1 `batch_id` khác.
+
+---
+
+## Bước 7 — Truy vấn
+
+```powershell
+.\scripts\run-job.ps1 src\pipelines\lakehouse\query.py --tables
+.\scripts\run-job.ps1 src\pipelines\lakehouse\query.py "SELECT COUNT(*) FROM cdp.bronze.rees46_events"
+.\scripts\run-job.ps1 src\pipelines\lakehouse\query.py --file scripts.sql
+```
+
+Time travel:
 
 ```sql
-SELECT COUNT(*) FROM cdp.bronze.rees46_events;
-SELECT COUNT(DISTINCT source_row_number) FROM cdp.bronze.rees46_events;
-SELECT event_type, COUNT(*) FROM cdp.bronze.rees46_events GROUP BY 1 ORDER BY 2 DESC;
+SELECT * FROM cdp.bronze.rees46_events VERSION AS OF 1196041924026619828;
 ```
 
-**Đối soát bắt buộc** (contract §9):
-- Số dòng đọc từ CSV = số dòng ghi vào Bronze
-- Không có dòng trùng `source_row_number`
-- `price` null rate hợp lý (không phải 100% → lỗi parse)
+---
+
+## Bước 8 — Kiểm chứng
+
+```powershell
+.\scripts\run-job.ps1 src\pipelines\lakehouse\verify_lakehouse.py
+```
+
+23 kiểm tra, theo 8 nhóm:
+
+| Nhóm | Kiểm tra |
+|---|---|
+| 1. Catalog | 3 namespace tồn tại |
+| 2. Bronze tables | 4 bảng tồn tại |
+| 3. Partitioning | cả 4 bảng partition theo `days(event_date)` |
+| 4. Dedup key | khoá chống lặp unique (đếm distinct = đếm tổng) |
+| 5. REES46 contract | `currency` luôn NULL, `source_system` đúng, `event_date` khớp `event_time`, checksum luôn có |
+| 6. Time travel | snapshot cũ vẫn đọc được |
+| 7. Partition pruning | plan lọc trên cột partition |
+| 8. Storage layout | file parquet nằm dưới `s3://cdp/warehouse` |
 
 ---
 
 ## Bước 9 — Job ingestion Kafka (web events)
 
+**Chưa làm** — cần stack nguồn (`src/demo/sources/runtime.py`) chạy được.
+
 Đọc topic `cdp.web.good` (output của Snowplow Enrich):
 
 ```python
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType
-
-# Đọc từ đầu topic, mỗi batch = 1 micro-batch.
-raw = (spark.readStream
-       .format("kafka")
-       .option("kafka.bootstrap.servers", "kafka:9092")
-       .option("subscribe", "cdp.web.good")
-       .option("startingOffsets", "earliest")
-       .load())
-```
-
-**Vấn đề:** Kafka source trong Spark trả về `value` là **binary**, cần decode
-theo từng loại topic:
-- `cdp.web.good` → Snowplow TSV enriched (không phải JSON) → cần parser riêng
-- `cdp.business.public.*` → JSON (Debezium) → `from_json` được
-
-> **Khuyến nghị cho local:** dùng **batch read** (`spark.read.format("kafka")`
-> không phải `readStream`) với `startingOffsets=earliest` + offset filter, thay
-> vì streaming. Lý do: xử lý batch cho phép `overwrite(batch_id)` idempotent,
-> còn structured streaming với `writeTo().overwrite()` có giới hạn về
-> idempotency và khó truy vết.
-
-```python
 raw = (spark.read.format("kafka")
-       .option("kafka.bootstrap.servers", "kafka:9092")
+       .option("kafka.bootstrap.servers", "127.0.0.1:19092")
        .option("subscribe", "cdp.web.good")
        .option("startingOffsets", "earliest")
        .option("endingOffsets", "latest")
@@ -538,7 +349,17 @@ raw = (spark.read.format("kafka")
        .load())
 ```
 
-**Metadata truy vết bắt buộc** (contract §3.2) — không được bỏ:
+**Vấn đề:** Kafka source trả về `value` là **binary**, cần decode theo từng loại topic:
+- `cdp.web.good` → Snowplow TSV enriched (không phải JSON) → cần parser riêng
+- `cdp.business.public.*` → JSON (Debezium) → `from_json` được
+
+> **Khuyến nghị cho local:** dùng **batch read** (`spark.read.format("kafka")`
+> không phải `readStream`) với `startingOffsets=earliest` + offset filter.
+> Batch cho phép `overwrite(batch_id)` idempotent; structured streaming thì
+> không.
+
+Metadata truy vết bắt buộc (contract §3.2):
+
 ```python
 raw.select(
     F.col("topic").alias("kafka_topic"),
@@ -548,9 +369,6 @@ raw.select(
     F.col("value").alias("value_bytes"),
 )
 ```
-
-**Khoá chống lặp = `(kafka_topic, kafka_partition, kafka_offset)`** — đây là
-khoá chuẩn của Kafka, đọc lại cùng offset không tạo bản ghi mới.
 
 ---
 
@@ -575,13 +393,12 @@ cdc = (raw
        ))
 ```
 
-**Phân biệt snapshot và change** (contract P8):
+Phân biệt snapshot và change (contract P8):
+
 ```python
-# Debezium đánh dấu snapshot bằng op='r' khi source.lsn = null
 cdc = cdc.withColumn(
     "op_category",
-    F.when(F.col("op") == "r", F.lit("snapshot"))
-     .otherwise(F.lit("change"))
+    F.when(F.col("op") == "r", F.lit("snapshot")).otherwise(F.lit("change"))
 )
 ```
 
@@ -602,7 +419,7 @@ silver = (bronze
     .withColumn("quality_flags", quality_flags_udf(F.col("payload"))))
 ```
 
-**Bộ kiểm tra chất lượng** (contract §9) — chạy sau mỗi batch, fail thì dừng:
+Bộ kiểm tra chất lượng (contract §9) — chạy sau mỗi batch, fail thì dừng:
 
 ```python
 def assert_quality(silver, quarantine, source, expected_rows):
@@ -614,8 +431,7 @@ def assert_quality(silver, quarantine, source, expected_rows):
 ```
 
 > **Bắt buộc:** đối soát cả **ID, giá trị và tổng số dòng** — không được chỉ
-> dựa vào thông báo "job chạy xong". Code cũ (`src/pipelines/lakehouse/common.py`)
-> có sẵn hàm `assert_same_rows()` làm full outer join + null-safe equality.
+> dựa vào thông báo "job chạy xong".
 
 ---
 
@@ -624,13 +440,13 @@ def assert_quality(silver, quarantine, source, expected_rows):
 Xây `gold.user_behavior`, `gold.session_funnel`, `gold.transaction`,
 `gold.customer_360` theo contract §7.
 
-**Ràng buộc phải kiểm tra bằng test, không chỉ bằng code:**
+Ràng buộc phải kiểm bằng test, không chỉ bằng code:
 
 ```python
 # gold.transaction KHÔNG được chứa doanh thu suy từ purchase_observed
 assert gold_transaction.join(
     gold_user_behavior.filter(F.col("purchase_observed") > 0), "customer_id"
-).count() == 0   # hoặc kiểm tra ngược lại cho đúng ngữ nghĩa
+).count() == 0
 
 # gold.customer_360 chỉ có customer_id từ nguồn web
 assert gold_customer_360.filter(F.col("identity_source") != "postgres_business").count() == 0
@@ -638,30 +454,7 @@ assert gold_customer_360.filter(F.col("identity_source") != "postgres_business")
 
 ---
 
-## Bước 13 — Bộ kiểm thử
-
-Theo contract, cần kiểm chứng:
-
-| Kiểm tra | Cách làm |
-|---|---|
-| **Replay idempotent** | Chạy lại job cùng `batch_id` → số dòng không đổi |
-| **Batch isolation** | Ghi batch B không ảnh hưởng batch A |
-| **Row count đối soát** | Số dòng nguồn = Bronze + Quarantine |
-| **Key uniqueness** | Không trùng khoá chống lặp |
-| **Time travel** | `SELECT * FROM cdp.bronze.x VERSION AS OF <snapshot_id>` |
-| **Partition pruning** | `EXPLAIN` cho thấy chỉ đọc 1 partition |
-| **Schema evolution** | `ALTER TABLE ADD COLUMN` rồi đọc dữ liệu cũ không lỗi |
-| **Delete/ẩn dòng** | `is_deleted = true` thay vì xoá vật lý |
-
-**Time travel — kiểm tra quan trọng nhất về mặt nghiệp vụ:**
-```sql
--- Xem trạng thái bảng TRƯỚC khi job ghi đè batch
-SELECT * FROM cdp.bronze.rees46_events VERSION AS OF 1234567890;
-```
-
----
-
-## Bước 14 — Kết nối API/dashboard với Gold
+## Bước 13 — Kết nối API/dashboard với Gold
 
 Hiện `src/demo/api/dashboard.py` đọc `observer.events` trong PostgreSQL.
 Thêm nguồn `gold`:
@@ -670,88 +463,76 @@ Thêm nguồn `gold`:
 EVENT_SOURCE = os.getenv("CDP_EVENT_SOURCE", "kafka")   # "kafka" | "gold"
 ```
 
-```python
-if EVENT_SOURCE == "gold":
-    return psycopg.connect(
-        host=SNOWPLOW_PG_HOST, port=SNOWPLOW_PG_PORT,
-        dbname=SNOWPLOW_PG_DATABASE, user=SNOWPLOW_PG_USER,
-        password=SNOWPLOW_PG_PASSWORD, connect_timeout=5, row_factory=dict_row,
-    )
-```
-
 Rồi đổi câu SQL từ `FROM events` sang `FROM gold.user_behavior`.
 
 ---
 
-## Bước 15 — Vận hành
-
-### Lệnh thường dùng
+## Bước 14 — Vận hành
 
 ```powershell
-# Bật
-docker compose -f config/docker/compose.lakehouse.yml up -d --wait --wait-timeout 180
+# Bật / tắt / xem trạng thái
+.\scripts\lakehouse.ps1 start
+.\scripts\lakehouse.ps1 stop
+.\scripts\lakehouse.ps1 status
 
-# Tắt (GIỮ volume)
-docker compose -f config/docker/compose.lakehouse.yml down
+# Chạy job
+.\scripts\run-job.ps1 src\pipelines\lakehouse\check_environment.py
+.\scripts\run-job.ps1 src\pipelines\lakehouse\apply_ddl.py
+.\scripts\run-job.ps1 src\pipelines\lakehouse\ingest_rees46.py --source data\REES46\sample.csv
+.\scripts\run-job.ps1 src\pipelines\lakehouse\verify_lakehouse.py
 
-# Xoá sạch (MẤT dữ liệu — dùng khi cần dựng lại từ đầu)
-docker compose -f config/docker/compose.lakehouse.yml down -v
+# Xem file trong storage
+.\tools\bin\mc.exe ls --recursive local/cdp/warehouse/
 
-# Chạy 1 job
-docker compose -f config/docker/compose.lakehouse.yml run --rm spark `
-  /workspace/src/pipelines/lakehouse/ingest_rees46.py --batch-id rees46-2019-10-v1
-
-# Chạy SQL tương tác
-docker compose -f config/docker/compose.lakehouse.yml exec spark `
-  /opt/spark/bin/spark-sql --master "local[2]" `
-  --properties-file /workspace/config/spark/lakehouse.conf
+# Xem metadata trong catalog
+$env:PGPASSWORD = "cdp-local-catalog"
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h 127.0.0.1 -p 15434 -U cdp -d iceberg -c "\dt"
 ```
 
 ### Chẩn đoán
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |---|---|---|
-| `ClassNotFoundException: S3FileIO` | Thiếu `iceberg-aws-bundle` | Thêm jar, rebuild image |
+| `Hadoop home directory C:\hadoop does not exist` | Chưa set `HADOOP_HOME` | Dùng `scripts\run-job.ps1` (tự set) |
+| `ClassNotFoundException: S3FileIO` | Thiếu `iceberg-aws-bundle` | Copy jar vào `pyspark/jars/` |
 | `NoClassDefFoundError: Scala 2.13` | Sai bản `iceberg-spark-runtime` | Dùng đúng `-3.5_2.12` |
-| `UnknownHostException: s3.amazonaws.com` | Thiếu `s3.endpoint` | Thêm `spark.sql.catalog.cdp.s3.endpoint` |
+| `UnknownHostException: s3.amazonaws.com` | Thiếu `s3.endpoint` | Thêm `...s3.endpoint` |
 | `The specified bucket does not exist` | Thiếu `path-style-access` | Thêm `...s3.path-style-access true` |
 | `SignatureDoesNotMatch` | Chunked encoding | Thêm `...s3.chunked-encoding-enabled false` |
-| `Connection refused` tới catalog | Catalog chưa healthy | Kiểm tra `docker compose ps`, đợi healthcheck |
-| `Table ... does not exist` | Chưa tạo DDL | Chạy lại Bước 7 |
-| `OutOfMemoryError` | Đang dùng pandas thay vì DuckDB | Xem lại Bước 8.1 |
-| Job chạy nhưng không thấy dữ liệu | Ghi sai `batch_id` | Kiểm tra `SELECT DISTINCT batch_id` |
+| `Connection refused` tới catalog | Catalog chưa chạy | `.\scripts\lakehouse.ps1 start` |
+| `SparkNumberFormatException` | Dùng `cast` cho cột có giá trị lỗi | Dùng `try_cast` |
+| `Table ... does not exist` | Chưa tạo DDL | `apply_ddl.py` |
+| `OutOfMemoryError` | Đang dùng pandas thay vì DuckDB | Xem lại Bước 6.1 |
+| Job chạy nhưng không thấy dữ liệu | Ghi sai `batch_id` | `SELECT DISTINCT batch_id` |
 | Lệch ngày giữa Bronze và Gold | Thiếu `timeZone UTC` | Thêm `spark.sql.session.timeZone UTC` |
+| `HCS_E_SERVICE_NOT_AVAILABLE` | WSL2 chưa bật | Docker không dùng được → dùng native |
 
 ---
 
 ## Checklist triển khai
 
-- [ ] Docker Desktop chạy, `docker version` trả server version
-- [ ] Disk trống ≥ 40 GB, RAM ≥ 8 GB
-- [ ] `config/storage/s3.local.json` (nếu dùng SeaweedFS)
-- [ ] `config/spark/lakehouse.conf` — đủ 3 nhóm: catalog / storage / behaviour
-- [ ] `config/docker/lakehouse.Dockerfile` — 3 jar, Java 17
-- [ ] Build image: `docker build -f config/docker/lakehouse.Dockerfile -t cdp-lakehouse-spark:latest .`
-- [ ] `config/docker/compose.lakehouse.yml` — catalog + storage + spark
-- [ ] Stack nguồn đã `up` (để có network `cdp-sources_default`)
-- [ ] Lakehouse `up -d --wait`
-- [ ] Bucket `cdp` tồn tại trong MinIO
-- [ ] `SHOW NAMESPACES IN cdp` trả về namespace
-- [ ] DDL Bronze tạo thành công
-- [ ] Job REES46 chạy, đối soát số dòng khớp
-- [ ] Job Kafka + CDC chạy
-- [ ] Silver + quarantine + bộ kiểm tra chất lượng
-- [ ] Gold + test ràng buộc nghiệp vụ
-- [ ] Bộ kiểm thử replay / time travel / partition pruning
+- [x] `scripts/lakehouse.ps1 start` — catalog + storage chạy
+- [x] `config/spark/lakehouse.conf` — đủ 3 nhóm: catalog / storage / behaviour
+- [x] `tools/jars/` — 3 jar
+- [x] `config/storage/s3.local.json` — credentials S3
+- [x] DDL Bronze — 4 bảng, `format-version = 2`
+- [x] Job REES46 (DuckDB → Bronze), idempotent
+- [x] Bộ kiểm chứng 23/23
+- [ ] Stack nguồn chạy được trên Windows (`runtime.py` dùng `ps -p` POSIX)
+- [ ] Job ingestion Kafka web events
+- [ ] Job ingestion CDC
+- [ ] DDL + job Silver + quarantine
+- [ ] DDL + job Gold
+- [ ] Kết nối API/dashboard với Gold
 
 ---
 
 ## Ghi chú về Airflow / Kubernetes
 
-Contract §10 quy định: **chỉ sau khi pipeline local được nghiệm thu**. Cụ thể:
+Contract §10 quy định: **chỉ sau khi pipeline local được nghiệm thu**.
 
 | Công nghệ | Khi nào | Lý do |
 |---|---|---|
 | Airflow | Sau khi ≥ 3 job ổn định | Orchestration chỉ có giá trị khi job đã chạy ổn định |
-| Kubernetes | Sau khi cần HA | Local 1 broker, không có HA; K8s thừa |
+| Kubernetes | Sau khi cần HA | Local 1 broker, không có HA |
 | Trino | Khi cần query ngoài Spark | Iceberg đã hỗ trợ sẵn |

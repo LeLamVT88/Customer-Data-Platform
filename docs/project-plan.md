@@ -134,6 +134,9 @@ Trước khi bước 2, cần khôi phục môi trường local: `src/demo/sourc
 dùng lệnh POSIX `ps` nên `runtime up` không chạy được trên Windows; dependency
 `kafka-python` và `snowplow-analytics-sdk` cũng chưa được cài trong `.venv`.
 
+Hướng dẫn dựng stack Iceberg local (catalog + storage + Spark) nằm ở
+[lakehouse-deployment.md](lakehouse-deployment.md).
+
 ## 7. Phạm vi đã dọn ngày 12/11/2026
 
 - Xóa các job Spark/Iceberg trong `src/pipelines/lakehouse/`, các job Micro →

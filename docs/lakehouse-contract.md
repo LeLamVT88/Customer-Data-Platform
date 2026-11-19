@@ -7,6 +7,7 @@ trước.
 
 Tài liệu liên quan:
 - [project-plan.md](project-plan.md) — kiến trúc tổng thể và lộ trình
+- [lakehouse-deployment.md](lakehouse-deployment.md) — hướng dẫn dựng stack Iceberg local
 - [operations.md](operations.md) — vận hành stack nguồn, hợp đồng dữ liệu nguồn
 
 ---

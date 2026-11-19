@@ -5,6 +5,7 @@ website demo (hành vi Snowplow/Kafka cùng nghiệp vụ PostgreSQL/Debezium).
 Lakehouse REES46 cũ đã được gỡ ngày 12/11/2026; Lakehouse chung chưa triển khai.
 
 - [Kiến trúc và tiến độ](docs/project-plan.md)
+- [Hợp đồng dữ liệu Lakehouse chung](docs/lakehouse-contract.md)
 - [Vận hành, kiểm thử và dữ liệu kiểm chứng](docs/operations.md)
 - [Cấu trúc code demo](src/demo/README.md)
 

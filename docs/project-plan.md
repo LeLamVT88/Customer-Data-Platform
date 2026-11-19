@@ -16,6 +16,11 @@ Xây một Lakehouse chung để thu thập, lưu trữ, chuẩn hóa và tổng
 Chung catalog, warehouse và các tầng Bronze/Silver/Gold không có nghĩa phải
 ép mọi nguồn vào cùng một bảng hoặc ghép danh tính giữa hai tập dữ liệu.
 
+> **Hợp đồng dữ liệu đã chốt:** [lakehouse-contract.md](lakehouse-contract.md) —
+> định nghĩa bảng Bronze/Silver/Gold, grain, khoá chống lặp, quy tắc danh tính
+> và bộ kiểm tra chất lượng cho từng nguồn. Phải đọc tài liệu đó trước khi
+> viết job ingestion.
+
 ## 2. Trạng thái hiện tại
 
 | Hạng mục | Trạng thái |
@@ -114,7 +119,9 @@ có cùng ý nghĩa. Các bảng nghiệp vụ CDC giữ trạng thái theo khó
 
 ## 6. Lộ trình xây lại
 
-1. Chốt contract chung, bảng theo nguồn, grain, khóa và chính sách lưu dữ liệu.
+1. ✅ Chốt contract chung, bảng theo nguồn, grain, khóa và chính sách lưu dữ liệu
+   → [lakehouse-contract.md](lakehouse-contract.md) (19/11/2026; còn §11 chờ
+   thầy/team review).
 2. Thiết lập một catalog/warehouse dùng chung, cấu hình chạy local mới.
 3. Xây ingestion REES46 và Kafka hành vi/CDC vào Bronze có metadata truy vết.
 4. Xây Silver, quarantine, trạng thái CDC và kiểm tra replay/khôi phục.
@@ -122,6 +129,10 @@ có cùng ý nghĩa. Các bảng nghiệp vụ CDC giữ trạng thái theo khó
 6. Kết nối API/dashboard với Gold, kiểm chứng đầu cuối và đo hiệu năng.
 
 Airflow, Kubernetes và HA chỉ xem xét sau khi pipeline local được nghiệm thu.
+
+Trước khi bước 2, cần khôi phục môi trường local: `src/demo/sources/runtime.py`
+dùng lệnh POSIX `ps` nên `runtime up` không chạy được trên Windows; dependency
+`kafka-python` và `snowplow-analytics-sdk` cũng chưa được cài trong `.venv`.
 
 ## 7. Phạm vi đã dọn ngày 12/11/2026
 
